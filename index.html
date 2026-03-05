@@ -1,116 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Developers</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      background-color: #0f0f0f;
-      color: #ffffff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 40px 20px;
-    }
-
-    h1 {
-      font-size: 2.2rem;
-      margin-bottom: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
-    p.subtitle {
-      color: #aaaaaa;
-      margin-bottom: 36px;
-      font-size: 1rem;
-    }
-
-    .video-container {
-      width: 100%;
-      max-width: 900px;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
-      background: #1a1a1a;
-    }
-
-    video {
-      width: 100%;
-      display: block;
-    }
-
-    .upload-section {
-      margin-top: 30px;
-      text-align: center;
-    }
-
-    .upload-section p {
-      color: #888;
-      margin-bottom: 12px;
-      font-size: 0.9rem;
-    }
-
-    label.upload-btn {
-      cursor: pointer;
-      background: #1e90ff;
-      color: #fff;
-      padding: 10px 24px;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      transition: background 0.2s;
-    }
-
-    label.upload-btn:hover {
-      background: #1570cd;
-    }
-
-    input[type="file"] {
-      display: none;
-    }
-  </style>
+  <link rel="stylesheet" href="/src/style.css" />
 </head>
-<body>
+<body class="bg-neutral-950 text-white min-h-full flex flex-col items-center justify-start py-16 px-4">
 
-  <h1>Developers</h1>
-  <p class="subtitle">Video Player</p>
+  <h1 class="text-4xl font-bold tracking-widest uppercase mb-2">Developers</h1>
+  <p class="text-neutral-400 text-sm mb-10">Video Player</p>
 
-  <div class="video-container">
-    <video id="videoPlayer" controls autoplay muted>
-      <!-- Replace the src below with your video file, e.g. src="video.mp4" -->
-      <source id="videoSource" src="" type="video/mp4" />
+  <div id="playerWrapper" class="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl bg-neutral-900 ring-1 ring-white/10">
+    <video
+      id="videoPlayer"
+      class="w-full block"
+      controls
+      muted
+      playsinline
+    >
       Your browser does not support the video tag.
     </video>
+
+    <!-- Empty state shown when no video is loaded -->
+    <div id="emptyState" class="flex flex-col items-center justify-center py-24">
+      <svg class="w-16 h-16 text-neutral-600 mb-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9A2.25 2.25 0 004.5 18.75z" />
+      </svg>
+      <p class="text-neutral-500 text-sm">No video loaded yet</p>
+    </div>
   </div>
 
-  <div class="upload-section">
-    <p>Or load a video from your device:</p>
-    <label class="upload-btn" for="fileInput">Choose Video File</label>
-    <input type="file" id="fileInput" accept="video/*" />
+  <div class="mt-8 flex flex-col items-center gap-3">
+    <p class="text-neutral-500 text-xs uppercase tracking-widest">Load a video from your device</p>
+    <label
+      for="fileInput"
+      class="cursor-pointer bg-blue-600 hover:bg-blue-500 active:bg-blue-700 transition-colors text-white font-semibold px-6 py-2.5 rounded-lg text-sm"
+    >
+      Choose Video File
+    </label>
+    <input type="file" id="fileInput" accept="video/*" class="hidden" />
   </div>
 
-  <script>
-    const fileInput = document.getElementById('fileInput');
-    const videoPlayer = document.getElementById('videoPlayer');
-
-    fileInput.addEventListener('change', function () {
-      const file = this.files[0];
-      if (file) {
-        const url = URL.createObjectURL(file);
-        videoPlayer.src = url;
-        videoPlayer.play();
-      }
-    });
-  </script>
-
+  <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

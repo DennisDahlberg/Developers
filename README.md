@@ -29,9 +29,6 @@ Tailwind CSS
 
 HTML / CSS / JavaScript
 
-These tools are commonly used in modern web development for fast builds and scalable front-end applications.
-
-
 #Installation
 
 Clone the repository:

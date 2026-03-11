@@ -55,6 +55,15 @@
     <button id="btn-screenshots" onclick="switchTab('screenshots')" class="tab-btn">
       📷 Screenshots<span id="screenshot-count" class="screenshot-badge" style="display:none">0</span>
     </button>
+    <button id="btn-achievements" onclick="switchTab('achievements')" class="tab-btn">
+      🏆 Achievements<span id="achievement-count" class="screenshot-badge" style="display:none">0</span>
+    </button>
+    <button id="btn-stats" onclick="switchTab('stats')" class="tab-btn">
+      📊 Stats
+    </button>
+    <button id="btn-social" onclick="switchTab('social')" class="tab-btn">
+      📱 Social
+    </button>
   </div>
 
   <div id="panel-video" class="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl bg-neutral-900 ring-1 ring-white/10" style="position:relative">
@@ -80,8 +89,70 @@
     <div id="screenshots-grid" class="screenshots-grid"></div>
   </div>
 
+  <!-- Stats panel -->
+  <div id="panel-stats" style="display:none; width:100%; max-width:56rem;">
+    <div id="stats-content"></div>
+  </div>
+
+  <!-- Achievements panel -->
+  <div id="panel-achievements" style="display:none; width:100%; max-width:56rem;">
+    <div class="achievements-header">
+      <span id="achievements-count-label" class="achievements-count-label"></span>
+    </div>
+    <div id="achievements-grid" class="achievements-grid"></div>
+  </div>
+
+  <!-- Social Media panel -->
+  <div id="panel-social" style="display:none; width:100%; max-width:56rem;">
+
+    <!-- Profile Card -->
+    <div class="social-profile-card">
+      <div class="social-avatar-circle" id="profile-avatar-display">🧑‍💻</div>
+      <div class="social-profile-info">
+        <div class="social-profile-name-row">
+          <span id="profile-name-text" class="social-profile-name">Your Name</span>
+          <span id="profile-handle-text" class="social-profile-handle">@user</span>
+        </div>
+        <p id="profile-bio-text" class="social-profile-bio">No bio yet.</p>
+        <div class="social-profile-stats">
+          <span id="profile-posts-count" class="social-profile-stat"><strong>0</strong> Posts</span>
+        </div>
+      </div>
+      <button onclick="openProfileEditor()" class="social-edit-profile-btn">✏️ Edit Profile</button>
+    </div>
+
+    <!-- Post Composer -->
+    <div class="post-composer">
+      <div class="post-composer-top">
+        <div id="composer-avatar" class="composer-avatar-circle">🧑‍💻</div>
+        <textarea id="post-message" class="post-message-input" placeholder="Share something with the community..." rows="3" maxlength="300"></textarea>
+      </div>
+      <div id="selected-ss-preview" class="selected-ss-preview" style="display:none">
+        <img id="selected-ss-img" class="selected-ss-img" alt="Selected screenshot" />
+        <button onclick="clearSelectedScreenshot()" class="selected-ss-remove" title="Remove">✕</button>
+      </div>
+      <div class="post-composer-bottom">
+        <div class="attach-screenshots-row">
+          <span class="attach-label">📎 Attach:</span>
+          <div id="attach-ss-strip" class="attach-ss-strip"></div>
+          <span id="attach-ss-empty" class="attach-ss-empty" style="display:none">No screenshots saved yet</span>
+        </div>
+        <div class="post-footer-right">
+          <span id="post-char-count" class="post-char-count">0 / 300</span>
+          <button onclick="submitPost()" class="post-submit-btn">Post</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feed -->
+    <div id="social-feed" class="social-feed">
+      <div class="social-feed-empty">No posts yet.<br>Share your first screenshot with the community!</div>
+    </div>
+
+  </div>
+
   <!-- Keyboard hints -->
-  <p class="mt-4 text-neutral-600 text-xs tracking-widest select-none">
+  <p id="keyboard-hints" class="mt-4 text-neutral-600 text-xs tracking-widest select-none">
     <span class="text-neutral-500">SPACE</span> play/pause &nbsp;·&nbsp;
     <span class="text-neutral-500">← →</span> seek 5s &nbsp;·&nbsp;
     <span class="text-neutral-500">↑ ↓</span> volume &nbsp;·&nbsp;
@@ -162,11 +233,54 @@
     </div>
   </div>
 
+  <!-- ===== Profile Edit Modal ===== -->
+  <div id="profile-modal" style="display:none">
+    <div id="profile-modal-container">
+      <button onclick="closeProfileEditor()" class="paywall-close-btn" title="Close">✕</button>
+      <h2 class="profile-modal-title">Edit Profile</h2>
+      <div class="avatar-picker-section">
+        <p class="avatar-picker-label">Choose your avatar</p>
+        <div class="avatar-picker-grid" id="avatar-picker-grid"></div>
+      </div>
+      <div class="profile-form">
+        <div class="profile-field">
+          <label class="profile-field-label">Display Name</label>
+          <input type="text" id="edit-name" class="profile-field-input" placeholder="Your Name" maxlength="60" autocomplete="off">
+        </div>
+        <div class="profile-field">
+          <label class="profile-field-label">Handle</label>
+          <input type="text" id="edit-handle" class="profile-field-input" placeholder="@yourhandle" maxlength="30" autocomplete="off">
+        </div>
+        <div class="profile-field">
+          <label class="profile-field-label">Bio</label>
+          <textarea id="edit-bio" class="profile-field-input profile-bio-input" placeholder="Tell the world about yourself..." maxlength="150" rows="3"></textarea>
+        </div>
+        <button onclick="saveProfileChanges()" class="profile-save-btn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const videos = {
       developers: '/Developers/developers.mp4',
       videoplayback: '/Developers/videoplayback.mp4',
     };
+
+    // ===== Achievement Definitions =====
+    var ACHIEVEMENTS_KEY = 'dev_achievements';
+    var ACH_STATS_KEY    = 'dev_ach_stats';
+    var ACHIEVEMENTS_DEF = [
+      { id: 'first_screenshot', icon: '📷', name: 'Shutterbug',     desc: 'Capture your first screenshot' },
+      { id: 'screenshot_5',    icon: '🎞',  name: 'Film Roll',      desc: 'Capture 5 screenshots' },
+      { id: 'screenshot_10',   icon: '📸', name: 'Paparazzi',      desc: 'Capture 10 screenshots' },
+      { id: 'watch_5min',      icon: '⏱',  name: 'Quick Watch',    desc: 'Watch 5 minutes of video' },
+      { id: 'watch_30min',     icon: '🎬', name: 'Cinephile',      desc: 'Watch 30 minutes of video' },
+      { id: 'mute_10',         icon: '🔇', name: 'Silencer',       desc: 'Mute and unmute 10 times' },
+      { id: 'theme_explorer',  icon: '🎨', name: 'Theme Explorer', desc: 'Try all 3 themes' },
+      { id: 'pro_member',      icon: '⭐', name: 'PRO Member',     desc: 'Subscribe to Developer PRO' },
+      { id: 'night_owl',       icon: '🦉', name: 'Night Owl',      desc: 'Watch between midnight and 5 AM' },
+      { id: 'editor_artist',   icon: '✏️', name: 'Editor Artist',  desc: 'Edit and save a screenshot' },
+    ];
 
     // ===== Intro animation control =====
     (function () {
@@ -188,6 +302,15 @@
       ['light', 'dark', 'goofy'].forEach(function (t) {
         document.getElementById('theme-btn-' + t).classList.toggle('theme-btn--active', t === theme);
       });
+      // Track theme exploration achievement
+      var stats = getAchStats();
+      var seen = stats.themesSeen || [];
+      if (!seen.includes(theme)) {
+        seen.push(theme);
+        stats.themesSeen = seen;
+        saveAchStats(stats);
+        if (seen.length >= 3) unlockAchievement('theme_explorer');
+      }
     }
 
     (function () {
@@ -219,12 +342,16 @@
         if (modal && modal.style.display !== 'none') { window.closeEditor(); return; }
         var pwModal = document.getElementById('paywall-modal');
         if (pwModal && pwModal.style.display !== 'none') { window.closePaywall(); return; }
+        var prModal = document.getElementById('profile-modal');
+        if (prModal && prModal.style.display !== 'none') { closeProfileEditor(); return; }
       }
       // Skip video shortcuts when the editor or paywall is open, or user is in a form field
       var edModal = document.getElementById('editor-modal');
       if (edModal && edModal.style.display !== 'none') return;
       var pwModal2 = document.getElementById('paywall-modal');
       if (pwModal2 && pwModal2.style.display !== 'none') return;
+      var prModal2 = document.getElementById('profile-modal');
+      if (prModal2 && prModal2.style.display !== 'none') return;
       if (e.target.matches('input, textarea, select, button')) return;
       const video = document.getElementById('main-video');
       switch (e.key) {
@@ -281,16 +408,31 @@
     }
 
     function switchTab(key) {
-      var isVideoTab = key !== 'screenshots';
+      var isVideoTab = key === 'developers' || key === 'videoplayback';
       document.getElementById('panel-video').style.display = isVideoTab ? '' : 'none';
-      document.getElementById('panel-screenshots').style.display = isVideoTab ? 'none' : '';
+      document.getElementById('panel-screenshots').style.display = key === 'screenshots' ? '' : 'none';
+      document.getElementById('panel-achievements').style.display = key === 'achievements' ? '' : 'none';
+      document.getElementById('panel-stats').style.display = key === 'stats' ? '' : 'none';
+      document.getElementById('panel-social').style.display = key === 'social' ? '' : 'none';
       if (isVideoTab && key !== currentVideoKey) {
         switchVideo(key);
       }
       if (key === 'screenshots') {
         renderScreenshots();
       }
-      ['developers', 'videoplayback', 'screenshots'].forEach(function (k) {
+      if (key === 'achievements') {
+        renderAchievements();
+      }
+      if (key === 'stats') {
+        renderStats();
+      }
+      if (key === 'social') {
+        renderSocialProfile();
+        renderFeed();
+        renderAttachStrip();
+      }
+      document.getElementById('keyboard-hints').style.display = isVideoTab ? '' : 'none';
+      ['developers', 'videoplayback', 'screenshots', 'achievements', 'stats', 'social'].forEach(function (k) {
         document.getElementById('btn-' + k).classList.toggle('tab-btn--active', k === key);
       });
     }
@@ -380,6 +522,13 @@
 
       updateScreenshotBadge();
       showToast('📷 Screenshot saved!');
+      // Track total shots taken
+      var st = getAchStats(); st.totalShotsTaken = (st.totalShotsTaken || 0) + 1; saveAchStats(st);
+      // Check screenshot achievements
+      var shotCount = getScreenshots().length;
+      unlockAchievement('first_screenshot');
+      if (shotCount >= 5)  unlockAchievement('screenshot_5');
+      if (shotCount >= 10) unlockAchievement('screenshot_10');
     }
 
     function deleteScreenshot(id) {
@@ -387,6 +536,7 @@
       saveScreenshots(list);
       updateScreenshotBadge();
       renderScreenshots();
+      var st = getAchStats(); st.deleteCount = (st.deleteCount || 0) + 1; saveAchStats(st);
     }
 
     function downloadScreenshot(id) {
@@ -398,6 +548,7 @@
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      var st = getAchStats(); st.downloadCount = (st.downloadCount || 0) + 1; saveAchStats(st);
     }
 
     function clearAllScreenshots() {
@@ -434,6 +585,153 @@
 
     // Initialise badge from persisted screenshots
     updateScreenshotBadge();
+
+    // ===== Achievements =====
+    function getAchievements() {
+      try { return JSON.parse(localStorage.getItem(ACHIEVEMENTS_KEY) || '{}'); } catch (e) { return {}; }
+    }
+
+    function getAchStats() {
+      try { return JSON.parse(localStorage.getItem(ACH_STATS_KEY) || '{}'); } catch (e) { return {}; }
+    }
+
+    function saveAchStats(stats) {
+      localStorage.setItem(ACH_STATS_KEY, JSON.stringify(stats));
+    }
+
+    var achToastTimer;
+    function showAchievementToast(msg) {
+      var toast = document.getElementById('achievement-toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(achToastTimer);
+      achToastTimer = setTimeout(function () { toast.classList.remove('show'); }, 3500);
+    }
+
+    function unlockAchievement(id) {
+      var earned = getAchievements();
+      if (earned[id]) return;
+      earned[id] = new Date().toISOString();
+      localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(earned));
+      var def = ACHIEVEMENTS_DEF.find(function (a) { return a.id === id; });
+      if (def) showAchievementToast('🏆 ' + def.name + ' — ' + def.desc);
+      updateAchievementBadge();
+      var panel = document.getElementById('panel-achievements');
+      if (panel && panel.style.display !== 'none') renderAchievements();
+    }
+
+    function updateAchievementBadge() {
+      var count = Object.keys(getAchievements()).length;
+      var badge = document.getElementById('achievement-count');
+      if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'inline-flex' : 'none'; }
+    }
+
+    function renderAchievements() {
+      var grid = document.getElementById('achievements-grid');
+      var label = document.getElementById('achievements-count-label');
+      var earned = getAchievements();
+      var earnedCount = Object.keys(earned).length;
+      label.textContent = earnedCount + ' / ' + ACHIEVEMENTS_DEF.length + ' badges earned';
+      grid.innerHTML = ACHIEVEMENTS_DEF.map(function (a) {
+        var isEarned = !!earned[a.id];
+        var dateStr = isEarned
+          ? new Date(earned[a.id]).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+          : '';
+        return '<div class="achievement-card ' + (isEarned ? 'achievement-card--earned' : 'achievement-card--locked') + '">' +
+          '<div class="achievement-icon">' + a.icon + '</div>' +
+          '<p class="achievement-name">' + a.name + '</p>' +
+          '<p class="achievement-desc">' + a.desc + '</p>' +
+          (isEarned ? '<p class="achievement-earned-at">' + dateStr + '</p>' : '') +
+        '</div>';
+      }).join('');
+    }
+
+    // Watch-time and mute tracking
+    (function () {
+      var video = document.getElementById('main-video');
+      var lastVideoTime = null;
+
+      video.addEventListener('timeupdate', function () {
+        var now = video.currentTime;
+        if (lastVideoTime !== null && !video.paused) {
+          var delta = now - lastVideoTime;
+          if (delta > 0 && delta < 2) {
+            var stats = getAchStats();
+            stats.watchSecs = (stats.watchSecs || 0) + delta;
+            saveAchStats(stats);
+            if (stats.watchSecs >= 300)  unlockAchievement('watch_5min');
+            if (stats.watchSecs >= 1800) unlockAchievement('watch_30min');
+          }
+        }
+        lastVideoTime = now;
+        if (!video.paused && new Date().getHours() < 5) unlockAchievement('night_owl');
+      });
+
+      var lastMuted = video.muted;
+      video.addEventListener('volumechange', function () {
+        if (video.muted !== lastMuted) {
+          lastMuted = video.muted;
+          var stats = getAchStats();
+          stats.muteCount = (stats.muteCount || 0) + 1;
+          saveAchStats(stats);
+          if (stats.muteCount >= 10) unlockAchievement('mute_10');
+        }
+      });
+    })();
+
+    updateAchievementBadge();
+
+    // Record first visit
+    (function () {
+      var st = getAchStats();
+      if (!st.firstVisit) { st.firstVisit = new Date().toISOString(); saveAchStats(st); }
+    })();
+
+    // ===== Stats =====
+    function formatWatchTime(secs) {
+      secs = Math.floor(secs || 0);
+      var h = Math.floor(secs / 3600);
+      var m = Math.floor((secs % 3600) / 60);
+      var s = secs % 60;
+      if (h > 0) return h + 'h ' + m + 'm ' + s + 's';
+      if (m > 0) return m + 'm ' + s + 's';
+      return s + 's';
+    }
+
+    function renderStats() {
+      var st      = getAchStats();
+      var shots   = getScreenshots();
+      var earned  = getAchievements();
+      var earnedCount = Object.keys(earned).length;
+
+      var statCards = [
+        { icon: '⏱', value: formatWatchTime(st.watchSecs), label: 'Watch time' },
+        { icon: '📷', value: shots.length,                  label: 'Screenshots saved' },
+        { icon: '📸', value: st.totalShotsTaken || 0,       label: 'Total shots taken' },
+        { icon: '✏️', value: st.editCount || 0,             label: 'Screenshots edited' },
+        { icon: '⬇️', value: st.downloadCount || 0,         label: 'Downloads' },
+        { icon: '🗑️', value: st.deleteCount || 0,           label: 'Deleted' },
+        { icon: '🔇', value: st.muteCount || 0,             label: 'Mute toggles' },
+        { icon: '🎨', value: (st.themesSeen || []).length,  label: 'Themes tried' },
+        { icon: '🏆', value: earnedCount + ' / ' + ACHIEVEMENTS_DEF.length, label: 'Badges earned' },
+        { icon: '⭐', value: isPro() ? 'PRO' : 'Free',      label: 'Account tier' },
+      ];
+
+      var firstVisitStr = st.firstVisit
+        ? new Date(st.firstVisit).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+        : 'Today';
+
+      var html = '<div class="stats-grid">' +
+        statCards.map(function (c) {
+          return '<div class="stat-card"><div class="stat-icon">' + c.icon + '</div>' +
+            '<div class="stat-value">' + c.value + '</div>' +
+            '<div class="stat-label">' + c.label + '</div></div>';
+        }).join('') +
+        '</div>' +
+        '<p class="stats-since">Tracking since ' + firstVisitStr + '</p>';
+
+      document.getElementById('stats-content').innerHTML = html;
+    }
 
     // ===== PRO =====
     var PRO_KEY = 'dev_pro';
@@ -472,6 +770,7 @@
         updateProUI();
         closePaywall();
         showToast('🎉 Welcome to Developer PRO!');
+        unlockAchievement('pro_member');
         btn.textContent = 'Subscribe — $25/mo';
         btn.disabled = false;
         document.getElementById('paywall-form').reset();
@@ -752,12 +1051,332 @@
           return s.id === editorScreenshotId ? Object.assign({}, s, { dataUrl: dataUrl }) : s;
         });
         saveScreenshots(list);
+        unlockAchievement('editor_artist');
+        var st = getAchStats(); st.editCount = (st.editCount || 0) + 1; saveAchStats(st);
         window.closeEditor();
         renderScreenshots();
         showToast('✅ Screenshot updated!');
       };
     })();
+
+    // ===== Social Media =====
+    var POSTS_KEY   = 'dev_posts';
+    var PROFILE_KEY = 'dev_profile';
+    var SOCIAL_AVATARS = ['🧑‍💻','👨‍💻','👩‍💻','🦊','🐱','🐶','🐼','🦄','🐸','🦁','🐯','🤖','👾','🎮','🎬','🎨','🌟','⚡','🔥','🌊','🐧','🎵'];
+    var selectedPostScreenshotId = null;
+    var editingAvatarEmoji = null;
+
+    function getProfile() {
+      try {
+        return JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null') ||
+          { name: 'Your Name', handle: '@user', bio: '', avatar: '🧑‍💻' };
+      } catch (e) {
+        return { name: 'Your Name', handle: '@user', bio: '', avatar: '🧑‍💻' };
+      }
+    }
+
+    function saveProfileData(profile) {
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    }
+
+    function getPosts() {
+      try { return JSON.parse(localStorage.getItem(POSTS_KEY) || '[]'); }
+      catch (e) { return []; }
+    }
+
+    function savePosts(posts) {
+      try { localStorage.setItem(POSTS_KEY, JSON.stringify(posts)); return true; }
+      catch (e) { return false; }
+    }
+
+    function timeAgo(isoStr) {
+      var diff = Math.max(0, Date.now() - new Date(isoStr).getTime());
+      var secs = Math.floor(diff / 1000);
+      var mins = Math.floor(secs / 60);
+      var hrs  = Math.floor(mins / 60);
+      var days = Math.floor(hrs / 24);
+      if (days >= 1)  return days + 'd ago';
+      if (hrs >= 1)   return hrs + 'h ago';
+      if (mins >= 1)  return mins + 'm ago';
+      return 'just now';
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderSocialProfile() {
+      var profile = getProfile();
+      var el;
+      if ((el = document.getElementById('profile-avatar-display'))) el.textContent = profile.avatar;
+      if ((el = document.getElementById('profile-name-text')))    el.textContent = profile.name;
+      if ((el = document.getElementById('profile-handle-text')))  el.textContent = profile.handle;
+      if ((el = document.getElementById('profile-bio-text')))     el.textContent = profile.bio || 'No bio yet.';
+      if ((el = document.getElementById('profile-posts-count')))  el.innerHTML = '<strong>' + getPosts().length + '</strong> Posts';
+      if ((el = document.getElementById('composer-avatar')))      el.textContent = profile.avatar;
+    }
+
+    function renderAttachStrip() {
+      var strip = document.getElementById('attach-ss-strip');
+      var empty = document.getElementById('attach-ss-empty');
+      if (!strip) return;
+      var screenshots = getScreenshots();
+      if (screenshots.length === 0) {
+        strip.innerHTML = '';
+        strip.style.display = 'none';
+        if (empty) empty.style.display = '';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      strip.style.display = '';
+      strip.innerHTML = screenshots.map(function (s) {
+        var sel = selectedPostScreenshotId === s.id;
+        return '<img src="' + s.dataUrl + '" class="attach-thumb' + (sel ? ' attach-thumb--selected' : '') +
+          '" title="' + escapeHtml(s.videoLabel) + ' @ ' + formatTime(s.videoTime) +
+          '" onclick="selectSocialScreenshot(\'' + s.id + '\')" alt="screenshot" loading="lazy" />';
+      }).join('');
+    }
+
+    function selectSocialScreenshot(id) {
+      if (selectedPostScreenshotId === id) {
+        selectedPostScreenshotId = null;
+        document.getElementById('selected-ss-preview').style.display = 'none';
+      } else {
+        selectedPostScreenshotId = id;
+        var ss = getScreenshots().find(function (s) { return s.id === id; });
+        if (ss) {
+          document.getElementById('selected-ss-img').src = ss.dataUrl;
+          document.getElementById('selected-ss-preview').style.display = '';
+        }
+      }
+      renderAttachStrip();
+    }
+
+    function clearSelectedScreenshot() {
+      selectedPostScreenshotId = null;
+      document.getElementById('selected-ss-preview').style.display = 'none';
+      renderAttachStrip();
+    }
+
+    function submitPost() {
+      var msgEl   = document.getElementById('post-message');
+      var message = (msgEl ? msgEl.value || '' : '').trim();
+      if (!message && !selectedPostScreenshotId) {
+        showToast('⚠️ Write something or attach a screenshot');
+        return;
+      }
+      var profile = getProfile();
+      var screenshotDataUrl = null;
+      if (selectedPostScreenshotId) {
+        var ss = getScreenshots().find(function (s) { return s.id === selectedPostScreenshotId; });
+        if (ss) screenshotDataUrl = ss.dataUrl;
+      }
+      var post = {
+        id: Date.now().toString(),
+        message: message,
+        screenshotDataUrl: screenshotDataUrl,
+        authorName: profile.name,
+        authorHandle: profile.handle,
+        authorAvatar: profile.avatar,
+        postedAt: new Date().toISOString(),
+        likes: 0,
+        likedByMe: false,
+        comments: [],
+      };
+      var posts = getPosts();
+      posts.unshift(post);
+      if (!savePosts(posts)) {
+        showToast('⚠️ Could not save post – storage full');
+        return;
+      }
+      if (msgEl) msgEl.value = '';
+      var charEl = document.getElementById('post-char-count');
+      if (charEl) { charEl.textContent = '0 / 300'; charEl.className = 'post-char-count'; }
+      clearSelectedScreenshot();
+      renderSocialProfile();
+      renderFeed();
+      showToast('🎉 Posted!');
+    }
+
+    function toggleLike(postId) {
+      var posts = getPosts();
+      var p = posts.find(function (x) { return x.id === postId; });
+      if (!p) return;
+      p.likedByMe = !p.likedByMe;
+      p.likes = Math.max(0, (p.likes || 0) + (p.likedByMe ? 1 : -1));
+      savePosts(posts);
+      var btn = document.getElementById('like-btn-' + postId);
+      if (btn) {
+        btn.className = 'post-action-btn' + (p.likedByMe ? ' post-action-btn--liked' : '');
+        btn.innerHTML = (p.likedByMe ? '❤️' : '🤍') + ' ' + p.likes;
+      }
+    }
+
+    function toggleComments(postId) {
+      var section = document.getElementById('comments-section-' + postId);
+      if (!section) return;
+      var isOpen = section.style.display !== 'none';
+      section.style.display = isOpen ? 'none' : '';
+      if (!isOpen) {
+        var input = section.querySelector('.post-comment-input');
+        if (input) setTimeout(function () { input.focus(); }, 50);
+      }
+    }
+
+    function submitComment(postId) {
+      var section = document.getElementById('comments-section-' + postId);
+      if (!section) return;
+      var input = section.querySelector('.post-comment-input');
+      if (!input) return;
+      var text = (input.value || '').trim();
+      if (!text) return;
+      var posts = getPosts();
+      var p = posts.find(function (x) { return x.id === postId; });
+      if (!p) return;
+      var profile = getProfile();
+      p.comments = p.comments || [];
+      p.comments.push({
+        id: Date.now().toString(),
+        authorName: profile.name,
+        authorAvatar: profile.avatar,
+        text: text,
+        postedAt: new Date().toISOString(),
+      });
+      savePosts(posts);
+      input.value = '';
+      var btn = document.getElementById('comment-btn-' + postId);
+      if (btn) btn.innerHTML = '💬 ' + p.comments.length;
+      var list = document.getElementById('comments-list-' + postId);
+      if (list) list.innerHTML = renderCommentsList(p.comments);
+    }
+
+    function renderCommentsList(comments) {
+      if (!comments || comments.length === 0) return '';
+      return comments.map(function (c) {
+        return '<div class="post-comment">' +
+          '<div class="post-comment-avatar">' + escapeHtml(c.authorAvatar || '🧑‍💻') + '</div>' +
+          '<div class="post-comment-body">' +
+            '<div class="post-comment-author">' + escapeHtml(c.authorName) +
+              ' <span style="font-weight:400;color:rgba(255,255,255,0.3);font-size:0.65rem">' + timeAgo(c.postedAt) + '</span></div>' +
+            '<div class="post-comment-text">' + escapeHtml(c.text) + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function deletePost(postId) {
+      var posts = getPosts().filter(function (x) { return x.id !== postId; });
+      savePosts(posts);
+      renderFeed();
+      renderSocialProfile();
+    }
+
+    function renderFeed() {
+      var feed = document.getElementById('social-feed');
+      if (!feed) return;
+      var posts = getPosts();
+      if (posts.length === 0) {
+        feed.innerHTML = '<div class="social-feed-empty">No posts yet.<br>Share your first screenshot with the community!</div>';
+        return;
+      }
+      var profile = getProfile();
+      feed.innerHTML = posts.map(function (post) {
+        var commentCount = post.comments ? post.comments.length : 0;
+        return '<div class="post-card" id="post-' + post.id + '">' +
+          '<div class="post-card-header">' +
+            '<div class="post-card-avatar">' + escapeHtml(post.authorAvatar || '🧑‍💻') + '</div>' +
+            '<div class="post-card-author-info">' +
+              '<div class="post-card-name">' + escapeHtml(post.authorName) + '</div>' +
+              '<div class="post-card-meta">' + escapeHtml(post.authorHandle) + ' \xb7 ' + timeAgo(post.postedAt) + '</div>' +
+            '</div>' +
+          '</div>' +
+          (post.screenshotDataUrl ? '<img src="' + post.screenshotDataUrl + '" class="post-card-image" loading="lazy" alt="Post screenshot" />' : '') +
+          (post.message ? '<div class="post-card-message">' + escapeHtml(post.message) + '</div>' : '') +
+          '<div class="post-card-actions">' +
+            '<button id="like-btn-' + post.id + '" onclick="toggleLike(\'' + post.id + '\')" class="post-action-btn' + (post.likedByMe ? ' post-action-btn--liked' : '') + '">' +
+              (post.likedByMe ? '\u2764\ufe0f' : '\ud83e\udd0d') + ' ' + (post.likes || 0) +
+            '</button>' +
+            '<button id="comment-btn-' + post.id + '" onclick="toggleComments(\'' + post.id + '\')" class="post-action-btn">\ud83d\udcac ' + commentCount + '</button>' +
+            '<div class="post-action-spacer"></div>' +
+            '<button onclick="deletePost(\'' + post.id + '\')" class="post-action-btn post-action-btn--delete" title="Delete post">\ud83d\uddd1</button>' +
+          '</div>' +
+          '<div id="comments-section-' + post.id + '" class="post-comments-section" style="display:none">' +
+            '<div id="comments-list-' + post.id + '">' + renderCommentsList(post.comments) + '</div>' +
+            '<div class="post-comment-input-row">' +
+              '<div class="post-comment-avatar">' + escapeHtml(profile.avatar) + '</div>' +
+              '<input type="text" class="post-comment-input" placeholder="Add a comment\u2026" maxlength="300" ' +
+                'onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitComment(\'' + post.id + '\')}" />' +
+              '<button onclick="submitComment(\'' + post.id + '\')" class="post-comment-submit">Reply</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    // ===== Profile Editor =====
+    function openProfileEditor() {
+      var profile = getProfile();
+      document.getElementById('edit-name').value   = profile.name;
+      document.getElementById('edit-handle').value = profile.handle;
+      document.getElementById('edit-bio').value    = profile.bio || '';
+      editingAvatarEmoji = profile.avatar;
+      renderAvatarPicker();
+      document.getElementById('profile-modal').style.display = 'flex';
+    }
+
+    function closeProfileEditor() {
+      document.getElementById('profile-modal').style.display = 'none';
+    }
+
+    function renderAvatarPicker() {
+      var grid = document.getElementById('avatar-picker-grid');
+      if (!grid) return;
+      grid.innerHTML = SOCIAL_AVATARS.map(function (emoji) {
+        return '<button onclick="selectAvatar(\'' + emoji + '\')" class="avatar-option' +
+          (editingAvatarEmoji === emoji ? ' avatar-option--selected' : '') + '">' + emoji + '</button>';
+      }).join('');
+    }
+
+    function selectAvatar(emoji) {
+      editingAvatarEmoji = emoji;
+      renderAvatarPicker();
+    }
+
+    function saveProfileChanges() {
+      var name   = (document.getElementById('edit-name').value   || '').trim() || 'Anonymous';
+      var handle = (document.getElementById('edit-handle').value || '').trim();
+      if (handle && !handle.startsWith('@')) handle = '@' + handle;
+      if (!handle) handle = '@user';
+      var bio = (document.getElementById('edit-bio').value || '').trim();
+      saveProfileData({ name: name, handle: handle, bio: bio, avatar: editingAvatarEmoji || '🧑‍💻' });
+      closeProfileEditor();
+      renderSocialProfile();
+      renderFeed();
+      showToast('✅ Profile updated!');
+    }
+
+    // Init social
+    (function () {
+      var msgInput = document.getElementById('post-message');
+      if (msgInput) {
+        msgInput.addEventListener('input', function () {
+          var len = this.value.length;
+          var el  = document.getElementById('post-char-count');
+          if (el) {
+            el.textContent = len + ' / 300';
+            el.className = 'post-char-count' + (len > 260 ? ' post-char-count--warn' : '');
+          }
+        });
+      }
+      renderSocialProfile();
+    })();
   </script>
   <div id="screenshot-toast" class="screenshot-toast"></div>
+  <div id="achievement-toast"></div>
 </body>
 </html>

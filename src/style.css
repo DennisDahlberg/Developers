@@ -292,3 +292,293 @@
   color: #222 !important;
   box-shadow: 0 0 0 2px #fff, 0 4px 20px rgba(255, 255, 255, 0.3) !important;
 }
+
+/* ===== Screenshot flash overlay ===== */
+#screenshot-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.screenshot-flash--active {
+  animation: screenshotFlash 0.45s ease-out forwards;
+}
+
+@keyframes screenshotFlash {
+  0%   { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+/* ===== Screenshot badge on tab button ===== */
+.screenshot-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 9999px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 0.05rem 0.35rem;
+  margin-left: 0.35rem;
+  min-width: 1rem;
+  line-height: 1.4;
+  vertical-align: middle;
+}
+
+/* ===== Screenshots Panel ===== */
+.screenshots-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  min-height: 2rem;
+}
+
+.screenshots-count-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.08em;
+}
+
+.screenshots-clear-btn {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+
+.screenshots-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.screenshots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+.screenshots-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.35);
+  padding: 4rem 1rem;
+  font-size: 0.9rem;
+  line-height: 2;
+}
+
+.key-hint {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 0.05rem 0.45rem;
+  font-family: monospace;
+  font-size: 0.85em;
+}
+
+.screenshot-card {
+  position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: rgb(23, 23, 23);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  outline: 1px solid rgba(255, 255, 255, 0.07);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.screenshot-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+}
+
+.screenshot-img {
+  width: 100%;
+  display: block;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.screenshot-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.04em;
+}
+
+.screenshot-label {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.screenshot-time {
+  font-variant-numeric: tabular-nums;
+  font-family: monospace;
+}
+
+.screenshot-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.35rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.screenshot-card:hover .screenshot-actions {
+  opacity: 1;
+}
+
+.screenshot-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  backdrop-filter: blur(6px);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.screenshot-btn:active {
+  transform: scale(0.88);
+}
+
+.screenshot-btn--download {
+  background: rgba(255, 255, 255, 0.88);
+  color: #111;
+}
+
+.screenshot-btn--download:hover {
+  background: #fff;
+}
+
+.screenshot-btn--delete {
+  background: rgba(220, 38, 38, 0.82);
+  color: #fff;
+}
+
+.screenshot-btn--delete:hover {
+  background: rgb(220, 38, 38);
+}
+
+/* ===== Toast notification ===== */
+.screenshot-toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: rgba(20, 20, 20, 0.95);
+  color: #fff;
+  padding: 0.55rem 1.1rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  opacity: 0;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  z-index: 9000;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease;
+}
+
+.screenshot-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* ===== Light theme — screenshot elements ===== */
+[data-theme="light"] .screenshot-card {
+  background: #fff;
+  outline-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .screenshot-card:hover {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .screenshot-info {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .screenshot-label {
+  color: rgba(0, 0, 0, 0.65);
+}
+
+[data-theme="light"] .screenshots-count-label {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] .screenshots-clear-btn {
+  border-color: rgba(0, 0, 0, 0.15);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .screenshots-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+[data-theme="light"] .screenshots-empty {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .key-hint {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="light"] .screenshot-toast {
+  background: rgba(255, 255, 255, 0.98);
+  color: #111;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== Goofy theme — screenshot elements ===== */
+[data-theme="goofy"] .screenshot-card {
+  background: rgba(0, 0, 0, 0.25);
+  outline: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 1.5rem;
+}
+
+[data-theme="goofy"] .screenshots-clear-btn {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'Comic Sans MS', cursive;
+}
+
+[data-theme="goofy"] .screenshots-count-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Comic Sans MS', cursive;
+}
+
+[data-theme="goofy"] .screenshots-empty {
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'Comic Sans MS', cursive;
+}
+
+[data-theme="goofy"] .screenshot-badge {
+  background: #fff;
+  color: #e73c7e;
+}

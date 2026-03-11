@@ -40,16 +40,19 @@
   <p class="text-neutral-400 text-sm mb-10">Video Player</p>
 
   <!-- Tab buttons -->
-  <div class="flex gap-3 mb-6">
-    <button id="btn-developers" onclick="switchVideo('developers')" class="tab-btn tab-btn--active">
+  <div class="flex gap-3 mb-6 flex-wrap justify-center">
+    <button id="btn-developers" onclick="switchTab('developers')" class="tab-btn tab-btn--active">
       Developers
     </button>
-    <button id="btn-videoplayback" onclick="switchVideo('videoplayback')" class="tab-btn">
+    <button id="btn-videoplayback" onclick="switchTab('videoplayback')" class="tab-btn">
       Dancing
+    </button>
+    <button id="btn-screenshots" onclick="switchTab('screenshots')" class="tab-btn">
+      📷 Screenshots<span id="screenshot-count" class="screenshot-badge" style="display:none">0</span>
     </button>
   </div>
 
-  <div class="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl bg-neutral-900 ring-1 ring-white/10">
+  <div id="panel-video" class="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl bg-neutral-900 ring-1 ring-white/10" style="position:relative">
     <video
       id="main-video"
       class="w-full block"
@@ -60,6 +63,16 @@
     >
       Your browser does not support the video tag.
     </video>
+    <div id="screenshot-flash"></div>
+  </div>
+
+  <!-- Screenshots panel -->
+  <div id="panel-screenshots" style="display:none; width:100%; max-width:56rem;">
+    <div class="screenshots-header">
+      <span id="screenshots-count-label" class="screenshots-count-label"></span>
+      <button onclick="clearAllScreenshots()" class="screenshots-clear-btn">Clear All</button>
+    </div>
+    <div id="screenshots-grid" class="screenshots-grid"></div>
   </div>
 
   <!-- Keyboard hints -->
@@ -68,7 +81,8 @@
     <span class="text-neutral-500">← →</span> seek 5s &nbsp;·&nbsp;
     <span class="text-neutral-500">↑ ↓</span> volume &nbsp;·&nbsp;
     <span class="text-neutral-500">M</span> mute &nbsp;·&nbsp;
-    <span class="text-neutral-500">F</span> fullscreen
+    <span class="text-neutral-500">F</span> fullscreen &nbsp;·&nbsp;
+    <span class="text-neutral-500">S</span> screenshot
   </p>
 
   </div><!-- /#main-content -->
@@ -106,16 +120,14 @@
       setTheme(saved);
     })();
 
-    // ===== Keyboard shortcuts =====
-    // Seek helper: pause → seek → resume on seeked to prevent audio/video desync
+    // ===== Seek helper =====
+    // pause → seek → resume to prevent audio/video desync
     function seekVideo(video, time) {
       const wasPlaying = !video.paused;
       const seekingBack = time < video.currentTime;
       if (wasPlaying) video.pause();
       video.currentTime = time;
       if (wasPlaying) {
-        // Backward seeks require re-decoding from a keyframe — wait for canplay
-        // so the frame is actually ready before audio resumes.
         const resumeEvent = seekingBack ? 'canplay' : 'seeked';
         video.addEventListener(resumeEvent, function resume() {
           video.removeEventListener(resumeEvent, resume);
@@ -124,10 +136,9 @@
       }
     }
 
+    // ===== Keyboard shortcuts =====
     document.addEventListener('keydown', function (e) {
-      // Don't hijack shortcuts when the user is typing in a form field
       if (e.target.matches('input, textarea, select, button')) return;
-
       const video = document.getElementById('main-video');
       switch (e.key) {
         case ' ':
@@ -159,27 +170,184 @@
         case 'F':
           video.requestFullscreen && video.requestFullscreen();
           break;
+        case 's':
+        case 'S':
+          captureScreenshot();
+          break;
       }
     });
+
+    // ===== Tab / Video switching =====
+    var currentVideoKey = 'developers';
 
     function switchVideo(key) {
       const video = document.getElementById('main-video');
       const wasPlaying = !video.paused;
-
-      // Fade out, swap src, fade back in
       video.classList.add('switching');
-      setTimeout(() => {
+      setTimeout(function () {
         video.src = videos[key];
         video.load();
         if (wasPlaying) video.play();
         video.classList.remove('switching');
       }, 260);
+      currentVideoKey = key;
+    }
 
-      // Update tab button states
-      Object.keys(videos).forEach(k => {
+    function switchTab(key) {
+      var isVideoTab = key !== 'screenshots';
+      document.getElementById('panel-video').style.display = isVideoTab ? '' : 'none';
+      document.getElementById('panel-screenshots').style.display = isVideoTab ? 'none' : '';
+      if (isVideoTab && key !== currentVideoKey) {
+        switchVideo(key);
+      }
+      if (key === 'screenshots') {
+        renderScreenshots();
+      }
+      ['developers', 'videoplayback', 'screenshots'].forEach(function (k) {
         document.getElementById('btn-' + k).classList.toggle('tab-btn--active', k === key);
       });
     }
+
+    // ===== Screenshots =====
+    var SCREENSHOTS_KEY = 'dev_screenshots';
+    var MAX_SCREENSHOTS = 20;
+
+    function getScreenshots() {
+      try {
+        return JSON.parse(localStorage.getItem(SCREENSHOTS_KEY) || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveScreenshots(list) {
+      try {
+        localStorage.setItem(SCREENSHOTS_KEY, JSON.stringify(list));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function formatTime(secs) {
+      var m = Math.floor(secs / 60);
+      var s = Math.floor(secs % 60);
+      return m + ':' + String(s).padStart(2, '0');
+    }
+
+    var toastTimer;
+    function showToast(msg) {
+      var toast = document.getElementById('screenshot-toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2200);
+    }
+
+    function updateScreenshotBadge() {
+      var count = getScreenshots().length;
+      var badge = document.getElementById('screenshot-count');
+      badge.textContent = count;
+      badge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+
+    function captureScreenshot() {
+      var video = document.getElementById('main-video');
+      if (video.readyState < 2 || video.videoWidth === 0) {
+        showToast('⚠️ No video frame available');
+        return;
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+
+      var screenshot = {
+        id: Date.now().toString(),
+        dataUrl: dataUrl,
+        capturedAt: new Date().toISOString(),
+        videoTime: video.currentTime,
+        videoLabel: currentVideoKey === 'developers' ? 'Developers' : 'Dancing',
+      };
+
+      var existing = getScreenshots();
+      existing.unshift(screenshot);
+      var limited = existing.slice(0, MAX_SCREENSHOTS);
+      if (!saveScreenshots(limited)) {
+        var trimmed = limited.slice(0, limited.length - 2);
+        if (!saveScreenshots(trimmed)) {
+          showToast('⚠️ Storage full — delete some screenshots');
+          return;
+        }
+      }
+
+      // Flash effect when video panel is visible
+      var panelVideo = document.getElementById('panel-video');
+      if (panelVideo.style.display !== 'none') {
+        var flash = document.getElementById('screenshot-flash');
+        flash.classList.remove('screenshot-flash--active');
+        void flash.offsetWidth;
+        flash.classList.add('screenshot-flash--active');
+      }
+
+      updateScreenshotBadge();
+      showToast('📷 Screenshot saved!');
+    }
+
+    function deleteScreenshot(id) {
+      var list = getScreenshots().filter(function (s) { return s.id !== id; });
+      saveScreenshots(list);
+      updateScreenshotBadge();
+      renderScreenshots();
+    }
+
+    function downloadScreenshot(id) {
+      var screenshot = getScreenshots().find(function (s) { return s.id === id; });
+      if (!screenshot) return;
+      var a = document.createElement('a');
+      a.href = screenshot.dataUrl;
+      a.download = 'screenshot-' + id + '.jpg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function clearAllScreenshots() {
+      if (getScreenshots().length === 0) return;
+      localStorage.removeItem(SCREENSHOTS_KEY);
+      updateScreenshotBadge();
+      renderScreenshots();
+    }
+
+    function renderScreenshots() {
+      var grid = document.getElementById('screenshots-grid');
+      var label = document.getElementById('screenshots-count-label');
+      var screenshots = getScreenshots();
+      label.textContent = screenshots.length === 0 ? '' :
+        screenshots.length + ' screenshot' + (screenshots.length !== 1 ? 's' : '');
+      if (screenshots.length === 0) {
+        grid.innerHTML = '<p class="screenshots-empty">No screenshots yet.<br>Press <kbd class="key-hint">S</kbd> while watching a video to capture a frame.</p>';
+        return;
+      }
+      grid.innerHTML = screenshots.map(function (s) {
+        return '<div class="screenshot-card">' +
+          '<img src="' + s.dataUrl + '" alt="Screenshot" class="screenshot-img" loading="lazy" />' +
+          '<div class="screenshot-info">' +
+            '<span class="screenshot-label">' + s.videoLabel + '</span>' +
+            '<span class="screenshot-time">' + formatTime(s.videoTime) + '</span>' +
+          '</div>' +
+          '<div class="screenshot-actions">' +
+            '<button onclick="downloadScreenshot(\'' + s.id + '\')" class="screenshot-btn screenshot-btn--download" title="Download">⬇</button>' +
+            '<button onclick="deleteScreenshot(\'' + s.id + '\')" class="screenshot-btn screenshot-btn--delete" title="Delete">✕</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    // Initialise badge from persisted screenshots
+    updateScreenshotBadge();
   </script>
+  <div id="screenshot-toast" class="screenshot-toast"></div>
 </body>
 </html>

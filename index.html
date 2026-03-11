@@ -11,8 +11,27 @@
   <h1 class="text-4xl font-bold tracking-widest uppercase mb-2">Developers</h1>
   <p class="text-neutral-400 text-sm mb-10">Video Player</p>
 
+  <!-- Tab buttons -->
+  <div class="flex gap-3 mb-6">
+    <button
+      id="btn-developers"
+      onclick="switchVideo('developers')"
+      class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 bg-white text-neutral-950 shadow-lg"
+    >
+      Developers
+    </button>
+    <button
+      id="btn-videoplayback"
+      onclick="switchVideo('videoplayback')"
+      class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 bg-neutral-800 text-neutral-300 hover:bg-neutral-700 ring-1 ring-white/10"
+    >
+      Dancing
+    </button>
+  </div>
+
   <div class="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl bg-neutral-900 ring-1 ring-white/10">
     <video
+      id="main-video"
       class="w-full block"
       controls
       playsinline
@@ -22,5 +41,30 @@
       Your browser does not support the video tag.
     </video>
   </div>
+
+  <script>
+    const videos = {
+      developers: '/Developers/developers.mp4',
+      videoplayback: '/Developers/videoplayback.mp4',
+    };
+
+    function switchVideo(key) {
+      const video = document.getElementById('main-video');
+      const wasPlaying = !video.paused;
+      video.src = videos[key];
+      video.load();
+      if (wasPlaying) video.play();
+
+      // Update button styles
+      Object.keys(videos).forEach(k => {
+        const btn = document.getElementById('btn-' + k);
+        if (k === key) {
+          btn.className = 'px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 bg-white text-neutral-950 shadow-lg';
+        } else {
+          btn.className = 'px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 bg-neutral-800 text-neutral-300 hover:bg-neutral-700 ring-1 ring-white/10';
+        }
+      });
+    }
+  </script>
 </body>
 </html>

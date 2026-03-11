@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,6 +7,13 @@
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body class="bg-neutral-950 text-white min-h-full flex flex-col items-center justify-start py-16 px-4">
+
+  <!-- ===== Theme Switcher ===== -->
+  <div id="theme-switcher">
+    <button onclick="setTheme('light')" id="theme-btn-light" class="theme-btn" title="Light mode">☀️</button>
+    <button onclick="setTheme('dark')" id="theme-btn-dark" class="theme-btn theme-btn--active" title="Dark mode">🌙</button>
+    <button onclick="setTheme('goofy')" id="theme-btn-goofy" class="theme-btn" title="Goofy mode">🤪</button>
+  </div>
 
   <!-- ===== Intro Animation Overlay ===== -->
   <div id="intro-overlay">
@@ -34,18 +41,10 @@
 
   <!-- Tab buttons -->
   <div class="flex gap-3 mb-6">
-    <button
-      id="btn-developers"
-      onclick="switchVideo('developers')"
-      class="tab-btn px-5 py-2 rounded-full text-sm font-semibold bg-white text-neutral-950 shadow-lg"
-    >
+    <button id="btn-developers" onclick="switchVideo('developers')" class="tab-btn tab-btn--active">
       Developers
     </button>
-    <button
-      id="btn-videoplayback"
-      onclick="switchVideo('videoplayback')"
-      class="tab-btn px-5 py-2 rounded-full text-sm font-semibold bg-neutral-800 text-neutral-300 hover:bg-neutral-700 ring-1 ring-white/10"
-    >
+    <button id="btn-videoplayback" onclick="switchVideo('videoplayback')" class="tab-btn">
       Dancing
     </button>
   </div>
@@ -75,15 +74,27 @@
     (function () {
       const overlay = document.getElementById('intro-overlay');
       const content = document.getElementById('main-content');
-      // Trigger curtain exit + content entrance
       setTimeout(function () {
         overlay.style.animation = 'introExit 0.85s cubic-bezier(0.76, 0, 0.24, 1) forwards';
         content.style.animation = 'contentEnter 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards';
       }, 3200);
-      // Remove overlay from DOM after it has exited
       setTimeout(function () {
         overlay.remove();
       }, 4200);
+    })();
+
+    // ===== Theme =====
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      ['light', 'dark', 'goofy'].forEach(function (t) {
+        document.getElementById('theme-btn-' + t).classList.toggle('theme-btn--active', t === theme);
+      });
+    }
+
+    (function () {
+      const saved = localStorage.getItem('theme') || 'dark';
+      setTheme(saved);
     })();
 
     function switchVideo(key) {
@@ -99,14 +110,9 @@
         video.classList.remove('switching');
       }, 260);
 
-      // Update button styles
+      // Update tab button states
       Object.keys(videos).forEach(k => {
-        const btn = document.getElementById('btn-' + k);
-        if (k === key) {
-          btn.className = 'tab-btn px-5 py-2 rounded-full text-sm font-semibold bg-white text-neutral-950 shadow-lg';
-        } else {
-          btn.className = 'tab-btn px-5 py-2 rounded-full text-sm font-semibold bg-neutral-800 text-neutral-300 hover:bg-neutral-700 ring-1 ring-white/10';
-        }
+        document.getElementById('btn-' + k).classList.toggle('tab-btn--active', k === key);
       });
     }
   </script>

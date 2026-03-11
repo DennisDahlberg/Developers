@@ -18,3 +18,95 @@
 .tab-btn:active {
   transform: scale(0.94);
 }
+
+/* ===== Intro Animation ===== */
+
+#intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: radial-gradient(ellipse at 50% 45%, #111 0%, #000 70%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#intro-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.08) 3px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+}
+
+.intro-title {
+  display: flex;
+  perspective: 800px;
+}
+
+.intro-letter {
+  display: inline-block;
+  font-size: clamp(2.8rem, 9vw, 6.5rem);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #fff;
+  opacity: 0;
+  animation: letterIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  text-shadow:
+    0 0 20px rgba(255, 255, 255, 1),
+    0 0 60px rgba(255, 255, 255, 0.4),
+    0 0 120px rgba(255, 255, 255, 0.15);
+}
+
+.intro-line {
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  margin-top: 1.5rem;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.6);
+  animation: lineExpand 0.7s ease-out 2.1s forwards;
+}
+
+.intro-subtitle {
+  font-size: 0.7rem;
+  letter-spacing: 0.65em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 1.1rem;
+  opacity: 0;
+  animation: subtitleIn 0.6s ease-out 2.5s forwards;
+}
+
+@keyframes letterIn {
+  0%   { opacity: 0; transform: translateY(60px) rotateX(-90deg); filter: blur(12px); }
+  60%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0) rotateX(0deg); filter: blur(0); }
+}
+
+@keyframes lineExpand {
+  from { width: 0; opacity: 0; }
+  to   { width: min(500px, 62vw); opacity: 1; }
+}
+
+@keyframes subtitleIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes introExit {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-100vh); }
+}
+
+@keyframes contentEnter {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

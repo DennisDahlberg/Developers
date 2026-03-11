@@ -63,6 +63,15 @@
     </video>
   </div>
 
+  <!-- Keyboard hints -->
+  <p class="mt-4 text-neutral-600 text-xs tracking-widest select-none">
+    <span class="text-neutral-500">SPACE</span> play/pause &nbsp;·&nbsp;
+    <span class="text-neutral-500">← →</span> seek 5s &nbsp;·&nbsp;
+    <span class="text-neutral-500">↑ ↓</span> volume &nbsp;·&nbsp;
+    <span class="text-neutral-500">M</span> mute &nbsp;·&nbsp;
+    <span class="text-neutral-500">F</span> fullscreen
+  </p>
+
   </div><!-- /#main-content -->
 
   <script>
@@ -85,6 +94,62 @@
         overlay.remove();
       }, 4200);
     })();
+
+    // ===== Keyboard shortcuts =====
+    // Seek helper: pause → seek → resume on seeked to prevent audio/video desync
+    function seekVideo(video, time) {
+      const wasPlaying = !video.paused;
+      const seekingBack = time < video.currentTime;
+      if (wasPlaying) video.pause();
+      video.currentTime = time;
+      if (wasPlaying) {
+        // Backward seeks require re-decoding from a keyframe — wait for canplay
+        // so the frame is actually ready before audio resumes.
+        const resumeEvent = seekingBack ? 'canplay' : 'seeked';
+        video.addEventListener(resumeEvent, function resume() {
+          video.removeEventListener(resumeEvent, resume);
+          video.play();
+        });
+      }
+    }
+
+    document.addEventListener('keydown', function (e) {
+      // Don't hijack shortcuts when the user is typing in a form field
+      if (e.target.matches('input, textarea, select, button')) return;
+
+      const video = document.getElementById('main-video');
+      switch (e.key) {
+        case ' ':
+        case 'Spacebar':
+          e.preventDefault();
+          video.paused ? video.play() : video.pause();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          seekVideo(video, Math.min(video.currentTime + 5, video.duration));
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          seekVideo(video, Math.max(video.currentTime - 5, 0));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          video.volume = Math.min(video.volume + 0.1, 1);
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          video.volume = Math.max(video.volume - 0.1, 0);
+          break;
+        case 'm':
+        case 'M':
+          video.muted = !video.muted;
+          break;
+        case 'f':
+        case 'F':
+          video.requestFullscreen && video.requestFullscreen();
+          break;
+      }
+    });
 
     function switchVideo(key) {
       const video = document.getElementById('main-video');

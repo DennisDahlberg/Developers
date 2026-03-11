@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+/* ===== Video switch transition ===== */
+#main-video {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+#main-video.switching {
+  opacity: 0;
+  transform: scale(0.985);
+}
+
+/* ===== Tab button press effect ===== */
+.tab-btn {
+  transition: all 0.2s ease, transform 0.1s ease;
+}
+
+.tab-btn:active {
+  transform: scale(0.94);
+}
+
 /* ===== Intro Animation ===== */
 
 #intro-overlay {

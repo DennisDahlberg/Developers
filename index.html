@@ -37,14 +37,14 @@
     <button
       id="btn-developers"
       onclick="switchVideo('developers')"
-      class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 bg-white text-neutral-950 shadow-lg"
+      class="tab-btn px-5 py-2 rounded-full text-sm font-semibold bg-white text-neutral-950 shadow-lg"
     >
       Developers
     </button>
     <button
       id="btn-videoplayback"
       onclick="switchVideo('videoplayback')"
-      class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 bg-neutral-800 text-neutral-300 hover:bg-neutral-700 ring-1 ring-white/10"
+      class="tab-btn px-5 py-2 rounded-full text-sm font-semibold bg-neutral-800 text-neutral-300 hover:bg-neutral-700 ring-1 ring-white/10"
     >
       Dancing
     </button>
@@ -89,17 +89,23 @@
     function switchVideo(key) {
       const video = document.getElementById('main-video');
       const wasPlaying = !video.paused;
-      video.src = videos[key];
-      video.load();
-      if (wasPlaying) video.play();
+
+      // Fade out, swap src, fade back in
+      video.classList.add('switching');
+      setTimeout(() => {
+        video.src = videos[key];
+        video.load();
+        if (wasPlaying) video.play();
+        video.classList.remove('switching');
+      }, 260);
 
       // Update button styles
       Object.keys(videos).forEach(k => {
         const btn = document.getElementById('btn-' + k);
         if (k === key) {
-          btn.className = 'px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 bg-white text-neutral-950 shadow-lg';
+          btn.className = 'tab-btn px-5 py-2 rounded-full text-sm font-semibold bg-white text-neutral-950 shadow-lg';
         } else {
-          btn.className = 'px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 bg-neutral-800 text-neutral-300 hover:bg-neutral-700 ring-1 ring-white/10';
+          btn.className = 'tab-btn px-5 py-2 rounded-full text-sm font-semibold bg-neutral-800 text-neutral-300 hover:bg-neutral-700 ring-1 ring-white/10';
         }
       });
     }

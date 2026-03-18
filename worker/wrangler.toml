@@ -1,7 +1,0 @@
-name = "dev-leaderboard"
-main = "src/worker.js"
-compatibility_date = "2024-01-01"
-
-# After first deploy, run:
-#   npx wrangler secret put GITHUB_PAT
-# and paste your GitHub Personal Access Token (needs repo scope)

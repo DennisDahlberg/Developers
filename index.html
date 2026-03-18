@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Developers</title>
   <link rel="stylesheet" href="/src/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body class="bg-neutral-950 text-white min-h-full flex flex-col items-center justify-start py-16 px-4">
 
@@ -1572,19 +1573,27 @@
       });
     })();
 
-    // ===== Leaderboard (via Cloudflare Worker) =====
-    // TODO: Replace with your deployed Cloudflare Worker URL
-    var WORKER_URL = 'https://dev-leaderboard.YOUR-SUBDOMAIN.workers.dev';
-    var LEADERBOARD_URL = '/Developers/leaderboard.json';
+    // ===== Leaderboard (Supabase) =====
+    // TODO: Replace with your Supabase project URL and anon key
+    var SUPABASE_URL = 'https://ytqlwvyskaixglevarkk.supabase.co';
+    var SUPABASE_ANON_KEY = 'sb_publishable_uKKnnIZ7kz7AeCe9pticTQ_k4Otqgb4';
+    var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     function refreshLeaderboard() {
       var content = document.getElementById('leaderboard-content');
       content.innerHTML = '<p class="leaderboard-empty">Loading leaderboard\u2026</p>';
-      fetch(LEADERBOARD_URL + '?t=' + Date.now())
-        .then(function (r) { return r.ok ? r.json() : Promise.reject('not found'); })
-        .then(function (data) { renderLeaderboard(data.scores || []); })
+      supabase
+        .from('scores')
+        .select('name, score, streak, accuracy, created_at')
+        .order('score', { ascending: false })
+        .order('streak', { ascending: false })
+        .limit(50)
+        .then(function (result) {
+          if (result.error) throw result.error;
+          renderLeaderboard(result.data || []);
+        })
         .catch(function () {
-          content.innerHTML = '<p class="leaderboard-empty">No leaderboard data yet. Be the first to submit a score!</p>';
+          content.innerHTML = '<p class="leaderboard-empty">Could not load leaderboard.</p>';
         });
     }
 
@@ -1600,7 +1609,8 @@
         '</tr></thead><tbody>';
       scores.slice(0, 50).forEach(function (s, i) {
         var rank = medals[i] || (i + 1);
-        var dateStr = s.date ? new Date(s.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+        var d = s.created_at || s.date;
+        var dateStr = d ? new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
         html += '<tr class="' + (i < 3 ? 'leaderboard-row--top' : '') + '">' +
           '<td>' + rank + '</td>' +
           '<td>' + escapeHtml(s.name) + '</td>' +
@@ -1620,31 +1630,30 @@
       btn.textContent = 'Submitting\u2026';
       status.textContent = '';
 
-      fetch(WORKER_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: gamePlayerName.slice(0, 30),
+      var safeName = gamePlayerName.replace(/[^a-zA-Z0-9 _\-]/g, '').trim().slice(0, 30);
+      if (!safeName) { status.textContent = 'Invalid name'; btn.disabled = false; return; }
+
+      supabase
+        .from('scores')
+        .insert({
+          name: safeName,
           score: gameScore,
           streak: gameBestStreak,
           accuracy: gameTotalAttempts > 0 ? Math.round((gameScore / gameTotalAttempts) * 100) : 0,
-        }),
-      })
-      .then(function (r) {
-        if (r.ok) {
+        })
+        .then(function (result) {
+          if (result.error) throw result.error;
           btn.textContent = '\u2705 Submitted!';
-          status.textContent = 'Score sent! The leaderboard updates in ~30 seconds.';
+          status.textContent = 'Score saved!';
           status.className = 'game-submit-status game-submit-status--ok';
-        } else {
-          return r.json().then(function (d) { throw new Error(d.error || 'Submission failed'); });
-        }
-      })
-      .catch(function (err) {
-        btn.disabled = false;
-        btn.textContent = '\ud83d\ude80 Submit to Leaderboard';
-        status.textContent = 'Error: ' + err.message;
-        status.className = 'game-submit-status game-submit-status--err';
-      });
+          refreshLeaderboard();
+        })
+        .catch(function (err) {
+          btn.disabled = false;
+          btn.textContent = '\ud83d\ude80 Submit to Leaderboard';
+          status.textContent = 'Error: ' + (err.message || 'Submission failed');
+          status.className = 'game-submit-status game-submit-status--err';
+        });
     }
   </script>
   <div id="screenshot-toast" class="screenshot-toast"></div>

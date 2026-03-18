@@ -1560,6 +1560,43 @@
   border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* ===== User Profile View ===== */
+
+.user-profile-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.user-profile-back-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.user-profile-section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 1.25rem 0 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.post-card-name--link:hover {
+  text-decoration: underline;
+}
+
 /* ===== Post Composer ===== */
 
 .post-composer {
@@ -2173,6 +2210,21 @@
   border-color: rgba(220, 38, 38, 0.2);
 }
 
+[data-theme="light"] .user-profile-back-btn {
+  border-color: rgba(0, 0, 0, 0.12);
+  color: rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="light"] .user-profile-back-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #111;
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="light"] .user-profile-section-title {
+  color: rgba(0, 0, 0, 0.5);
+}
+
 [data-theme="light"] .social-profile-card,
 [data-theme="light"] .post-composer,
 [data-theme="light"] .post-card {
@@ -2376,6 +2428,14 @@
 
 [data-theme="goofy"] .auth-submit-btn {
   animation: btnBounce 1.4s ease-in-out infinite;
+}
+
+[data-theme="goofy"] .user-profile-back-btn {
+  font-family: 'Comic Sans MS', cursive;
+}
+
+[data-theme="goofy"] .user-profile-section-title {
+  font-family: 'Comic Sans MS', cursive;
 }
 
 [data-theme="goofy"] .social-profile-card,

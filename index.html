@@ -182,6 +182,27 @@
 
     </div>
 
+    <!-- User Profile View (overlay inside social panel) -->
+    <div id="user-profile-view" style="display:none">
+      <button onclick="closeUserProfile()" class="user-profile-back-btn">← Back to Feed</button>
+      <div class="social-profile-card">
+        <div class="social-avatar-circle" id="up-avatar">🧑‍💻</div>
+        <div class="social-profile-info">
+          <div class="social-profile-name-row">
+            <span id="up-name" class="social-profile-name"></span>
+            <span id="up-handle" class="social-profile-handle"></span>
+          </div>
+          <p id="up-bio" class="social-profile-bio"></p>
+          <div class="social-profile-stats">
+            <span id="up-posts-count" class="social-profile-stat"></span>
+            <span id="up-joined" class="social-profile-stat"></span>
+          </div>
+        </div>
+      </div>
+      <h3 class="user-profile-section-title">Posts</h3>
+      <div id="up-feed" class="social-feed"></div>
+    </div>
+
   </div>
 
   <!-- Game panel -->
@@ -1382,10 +1403,10 @@
         comments.sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
         var isOwn = uid === post.user_id;
         return '<div class="post-card" id="post-' + post.id + '">' +
-          '<div class="post-card-header">' +
+          '<div class="post-card-header" onclick="openUserProfile(\'' + post.user_id + '\')" style="cursor:pointer">' +
             '<div class="post-card-avatar">' + escapeHtml(author.avatar || '\ud83e\uddd1\u200d\ud83d\udcbb') + '</div>' +
             '<div class="post-card-author-info">' +
-              '<div class="post-card-name">' + escapeHtml(author.name) + '</div>' +
+              '<div class="post-card-name post-card-name--link">' + escapeHtml(author.name) + '</div>' +
               '<div class="post-card-meta">' + escapeHtml(author.handle) + ' \xb7 ' + timeAgo(post.created_at) + '</div>' +
             '</div>' +
           '</div>' +
@@ -1532,6 +1553,119 @@
           loadFeed();
           renderSocialProfile();
         });
+    }
+
+    // ===== User Profile View =====
+    function openUserProfile(userId) {
+      var profileView = document.getElementById('user-profile-view');
+      var socialMain = document.getElementById('social-main');
+      var socialAuth = document.getElementById('social-auth');
+      socialMain.style.display = 'none';
+      socialAuth.style.display = 'none';
+      profileView.style.display = '';
+
+      document.getElementById('up-avatar').textContent = '\u23f3';
+      document.getElementById('up-name').textContent = 'Loading\u2026';
+      document.getElementById('up-handle').textContent = '';
+      document.getElementById('up-bio').textContent = '';
+      document.getElementById('up-posts-count').textContent = '';
+      document.getElementById('up-joined').textContent = '';
+      document.getElementById('up-feed').innerHTML = '<div class="social-feed-empty">Loading posts\u2026</div>';
+
+      supabase.from('profiles').select('*').eq('id', userId).single()
+        .then(function (result) {
+          if (result.error) {
+            document.getElementById('up-name').textContent = 'User not found';
+            return;
+          }
+          var p = result.data;
+          document.getElementById('up-avatar').textContent = p.avatar || '\ud83e\uddd1\u200d\ud83d\udcbb';
+          document.getElementById('up-name').textContent = p.name;
+          document.getElementById('up-handle').textContent = p.handle;
+          document.getElementById('up-bio').textContent = p.bio || 'No bio yet.';
+          if (p.created_at) {
+            document.getElementById('up-joined').innerHTML = 'Joined <strong>' +
+              new Date(p.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) + '</strong>';
+          }
+
+          return supabase.from('posts')
+            .select('id, message, image_url, created_at, user_id, profiles!posts_user_id_fkey(name, handle, avatar), likes(user_id)')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+        })
+        .then(function (result) {
+          if (!result || result.error) return;
+          var posts = result.data || [];
+          document.getElementById('up-posts-count').innerHTML = '<strong>' + posts.length + '</strong> Posts';
+          if (posts.length === 0) {
+            document.getElementById('up-feed').innerHTML = '<div class="social-feed-empty">No posts yet.</div>';
+            return;
+          }
+          var postIds = posts.map(function (p) { return p.id; });
+          supabase.from('comments')
+            .select('id, post_id, text, created_at, user_id, profiles(name, avatar)')
+            .in('post_id', postIds)
+            .order('created_at', { ascending: true })
+            .then(function (cResult) {
+              var comments = (cResult.data || []);
+              posts.forEach(function (p) {
+                p.comments = comments.filter(function (c) { return c.post_id === p.id; });
+              });
+              renderUserProfileFeed(posts);
+            });
+        });
+    }
+
+    function renderUserProfileFeed(posts) {
+      var feed = document.getElementById('up-feed');
+      if (!feed) return;
+      var uid = currentUser ? currentUser.id : null;
+      feed.innerHTML = posts.map(function (post) {
+        var author = post.profiles || { name: 'Unknown', handle: '@unknown', avatar: '\ud83e\uddd1\u200d\ud83d\udcbb' };
+        var likeCount = post.likes ? post.likes.length : 0;
+        var liked = post.likes && uid ? post.likes.some(function (l) { return l.user_id === uid; }) : false;
+        var comments = post.comments || [];
+        var isOwn = uid === post.user_id;
+        return '<div class="post-card" id="post-' + post.id + '">' +
+          '<div class="post-card-header">' +
+            '<div class="post-card-avatar">' + escapeHtml(author.avatar || '\ud83e\uddd1\u200d\ud83d\udcbb') + '</div>' +
+            '<div class="post-card-author-info">' +
+              '<div class="post-card-name">' + escapeHtml(author.name) + '</div>' +
+              '<div class="post-card-meta">' + escapeHtml(author.handle) + ' \xb7 ' + timeAgo(post.created_at) + '</div>' +
+            '</div>' +
+          '</div>' +
+          (post.image_url ? '<img src="' + escapeHtml(post.image_url) + '" class="post-card-image" loading="lazy" alt="Post screenshot" />' : '') +
+          (post.message ? '<div class="post-card-message">' + escapeHtml(post.message) + '</div>' : '') +
+          '<div class="post-card-actions">' +
+            '<button id="like-btn-' + post.id + '" onclick="toggleLike(' + post.id + ')" class="post-action-btn' + (liked ? ' post-action-btn--liked' : '') + '">' +
+              (liked ? '\u2764\ufe0f' : '\ud83e\udd0d') + ' ' + likeCount +
+            '</button>' +
+            '<button id="comment-btn-' + post.id + '" onclick="toggleComments(' + post.id + ')" class="post-action-btn">\ud83d\udcac ' + comments.length + '</button>' +
+            '<div class="post-action-spacer"></div>' +
+            (isOwn ? '<button onclick="deletePost(' + post.id + ')" class="post-action-btn post-action-btn--delete" title="Delete post">\ud83d\uddd1</button>' : '') +
+          '</div>' +
+          '<div id="comments-section-' + post.id + '" class="post-comments-section" style="display:none">' +
+            '<div id="comments-list-' + post.id + '">' + renderCommentsList(comments) + '</div>' +
+            '<div class="post-comment-input-row">' +
+              '<div class="post-comment-avatar">' + escapeHtml(currentProfile ? currentProfile.avatar : '\ud83e\uddd1\u200d\ud83d\udcbb') + '</div>' +
+              '<input type="text" class="post-comment-input" placeholder="Add a comment\u2026" maxlength="300" ' +
+                'onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitComment(' + post.id + ')}" />' +
+              '<button onclick="submitComment(' + post.id + ')" class="post-comment-submit">Reply</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function closeUserProfile() {
+      document.getElementById('user-profile-view').style.display = 'none';
+      if (currentUser) {
+        document.getElementById('social-main').style.display = '';
+        loadFeed();
+      } else {
+        document.getElementById('social-auth').style.display = '';
+      }
     }
 
     // ===== Profile Editor =====

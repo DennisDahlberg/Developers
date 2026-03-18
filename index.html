@@ -64,6 +64,9 @@
     <button id="btn-social" onclick="switchTab('social')" class="tab-btn">
       📱 Social
     </button>
+    <button id="btn-game" onclick="switchTab('game')" class="tab-btn">
+      🎮 Game
+    </button>
   </div>
 
   <div id="panel-video" class="w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl bg-neutral-900 ring-1 ring-white/10" style="position:relative">
@@ -147,6 +150,60 @@
     <!-- Feed -->
     <div id="social-feed" class="social-feed">
       <div class="social-feed-empty">No posts yet.<br>Share your first screenshot with the community!</div>
+    </div>
+
+  </div>
+
+  <!-- Game panel -->
+  <div id="panel-game" style="display:none; width:100%; max-width:56rem;">
+
+    <!-- Game area -->
+    <div id="game-area" class="game-area">
+      <div id="game-start-screen" class="game-start-screen">
+        <div class="game-title">⌨️ Dev Typing Challenge</div>
+        <p class="game-desc">Type programming keywords as fast as you can!<br>You have <strong>30 seconds</strong>.</p>
+        <div class="game-name-field">
+          <label class="game-name-label">Your name for the leaderboard</label>
+          <input type="text" id="game-player-name" class="game-name-input" placeholder="Enter your name" maxlength="30" autocomplete="off" />
+        </div>
+        <button onclick="startGame()" class="game-start-btn">Start Game</button>
+      </div>
+
+      <div id="game-play-screen" style="display:none">
+        <div class="game-hud">
+          <span class="game-hud-item">⏱ <span id="game-timer">30</span>s</span>
+          <span class="game-hud-item">✅ <span id="game-score">0</span> words</span>
+          <span class="game-hud-item">🔥 <span id="game-streak">0</span> streak</span>
+        </div>
+        <div id="game-word-display" class="game-word-display"></div>
+        <input type="text" id="game-input" class="game-input" placeholder="Type here..." autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <div id="game-feedback" class="game-feedback"></div>
+      </div>
+
+      <div id="game-over-screen" style="display:none">
+        <div class="game-over-title">🏁 Time's Up!</div>
+        <div class="game-final-score">You typed <span id="game-final-words">0</span> words</div>
+        <div class="game-final-stats">
+          <span>Best streak: <strong id="game-final-streak">0</strong></span>
+          <span>Accuracy: <strong id="game-final-accuracy">0%</strong></span>
+        </div>
+        <div id="game-submit-section" class="game-submit-section">
+          <button onclick="submitScore()" id="game-submit-btn" class="game-submit-btn">🚀 Submit to Leaderboard</button>
+          <p id="game-submit-status" class="game-submit-status"></p>
+        </div>
+        <button onclick="resetGame()" class="game-start-btn" style="margin-top:0.75rem">Play Again</button>
+      </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="leaderboard-section">
+      <div class="leaderboard-header">
+        <span class="leaderboard-title">🏆 Leaderboard</span>
+        <button onclick="refreshLeaderboard()" class="leaderboard-refresh-btn">↻ Refresh</button>
+      </div>
+      <div id="leaderboard-content" class="leaderboard-content">
+        <p class="leaderboard-empty">Loading leaderboard…</p>
+      </div>
     </div>
 
   </div>
@@ -414,6 +471,7 @@
       document.getElementById('panel-achievements').style.display = key === 'achievements' ? '' : 'none';
       document.getElementById('panel-stats').style.display = key === 'stats' ? '' : 'none';
       document.getElementById('panel-social').style.display = key === 'social' ? '' : 'none';
+      document.getElementById('panel-game').style.display = key === 'game' ? '' : 'none';
       if (isVideoTab && key !== currentVideoKey) {
         switchVideo(key);
       }
@@ -431,8 +489,11 @@
         renderFeed();
         renderAttachStrip();
       }
+      if (key === 'game') {
+        refreshLeaderboard();
+      }
       document.getElementById('keyboard-hints').style.display = isVideoTab ? '' : 'none';
-      ['developers', 'videoplayback', 'screenshots', 'achievements', 'stats', 'social'].forEach(function (k) {
+      ['developers', 'videoplayback', 'screenshots', 'achievements', 'stats', 'social', 'game'].forEach(function (k) {
         document.getElementById('btn-' + k).classList.toggle('tab-btn--active', k === key);
       });
     }
@@ -1375,6 +1436,216 @@
       }
       renderSocialProfile();
     })();
+
+    // ===== Dev Typing Game =====
+    var GAME_WORDS = [
+      'function','const','let','var','return','async','await','promise',
+      'class','extends','import','export','default','module','require',
+      'console','log','error','debug','throw','catch','try','finally',
+      'if','else','switch','case','break','continue','for','while',
+      'map','filter','reduce','forEach','push','pop','shift','splice',
+      'string','number','boolean','null','undefined','object','array',
+      'typeof','instanceof','new','this','super','constructor','prototype',
+      'fetch','response','request','header','body','json','parse',
+      'addEventListener','querySelector','getElementById','createElement',
+      'useState','useEffect','useRef','useCallback','useMemo','render',
+      'component','props','state','context','dispatch','reducer','store',
+      'docker','kubernetes','nginx','webpack','babel','eslint','prettier',
+      'commit','branch','merge','rebase','cherry','stash','remote','origin',
+      'interface','type','enum','generic','tuple','union','intersection',
+      'database','query','schema','index','table','column','migration',
+      'server','client','socket','stream','buffer','pipe','proxy','cache',
+      'algorithm','recursive','iteration','callback','closure','scope',
+      'deploy','build','compile','bundle','minify','lint','test','debug',
+    ];
+    var GAME_DURATION = 30;
+    var gameTimer = null;
+    var gameTimeLeft = 0;
+    var gameScore = 0;
+    var gameStreak = 0;
+    var gameBestStreak = 0;
+    var gameTotalAttempts = 0;
+    var gameCurrentWord = '';
+    var gamePlayerName = '';
+
+    function pickRandomWord() {
+      return GAME_WORDS[Math.floor(Math.random() * GAME_WORDS.length)];
+    }
+
+    function startGame() {
+      var nameInput = document.getElementById('game-player-name');
+      gamePlayerName = (nameInput.value || '').trim();
+      if (!gamePlayerName) {
+        nameInput.focus();
+        nameInput.style.outline = '2px solid #ef4444';
+        setTimeout(function () { nameInput.style.outline = ''; }, 1500);
+        return;
+      }
+      gameScore = 0;
+      gameStreak = 0;
+      gameBestStreak = 0;
+      gameTotalAttempts = 0;
+      gameTimeLeft = GAME_DURATION;
+      document.getElementById('game-start-screen').style.display = 'none';
+      document.getElementById('game-over-screen').style.display = 'none';
+      document.getElementById('game-play-screen').style.display = '';
+      document.getElementById('game-score').textContent = '0';
+      document.getElementById('game-streak').textContent = '0';
+      document.getElementById('game-timer').textContent = gameTimeLeft;
+      document.getElementById('game-feedback').textContent = '';
+      var input = document.getElementById('game-input');
+      input.value = '';
+      input.disabled = false;
+      input.focus();
+      showNextWord();
+      gameTimer = setInterval(function () {
+        gameTimeLeft--;
+        document.getElementById('game-timer').textContent = gameTimeLeft;
+        if (gameTimeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function showNextWord() {
+      gameCurrentWord = pickRandomWord();
+      var display = document.getElementById('game-word-display');
+      display.textContent = gameCurrentWord;
+      display.className = 'game-word-display game-word-pop';
+      setTimeout(function () { display.className = 'game-word-display'; }, 200);
+    }
+
+    function endGame() {
+      clearInterval(gameTimer);
+      gameTimer = null;
+      document.getElementById('game-input').disabled = true;
+      document.getElementById('game-play-screen').style.display = 'none';
+      document.getElementById('game-over-screen').style.display = '';
+      document.getElementById('game-final-words').textContent = gameScore;
+      document.getElementById('game-final-streak').textContent = gameBestStreak;
+      var accuracy = gameTotalAttempts > 0 ? Math.round((gameScore / gameTotalAttempts) * 100) : 0;
+      document.getElementById('game-final-accuracy').textContent = accuracy + '%';
+      document.getElementById('game-submit-btn').disabled = false;
+      document.getElementById('game-submit-btn').textContent = '\ud83d\ude80 Submit to Leaderboard';
+      document.getElementById('game-submit-status').textContent = '';
+    }
+
+    function resetGame() {
+      document.getElementById('game-over-screen').style.display = 'none';
+      document.getElementById('game-play-screen').style.display = 'none';
+      document.getElementById('game-start-screen').style.display = '';
+    }
+
+    // Listen for typing
+    (function () {
+      var input = document.getElementById('game-input');
+      if (!input) return;
+      input.addEventListener('input', function () {
+        if (!gameTimer) return;
+        var typed = this.value.trim().toLowerCase();
+        if (typed === gameCurrentWord) {
+          gameScore++;
+          gameStreak++;
+          gameTotalAttempts++;
+          if (gameStreak > gameBestStreak) gameBestStreak = gameStreak;
+          document.getElementById('game-score').textContent = gameScore;
+          document.getElementById('game-streak').textContent = gameStreak;
+          document.getElementById('game-feedback').textContent = '\u2705 Nice!';
+          document.getElementById('game-feedback').className = 'game-feedback game-feedback--correct';
+          this.value = '';
+          showNextWord();
+        }
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          if (!gameTimer) return;
+          var typed = this.value.trim().toLowerCase();
+          if (typed && typed !== gameCurrentWord) {
+            gameTotalAttempts++;
+            gameStreak = 0;
+            document.getElementById('game-streak').textContent = '0';
+            document.getElementById('game-feedback').textContent = '\u274c Wrong! It was: ' + gameCurrentWord;
+            document.getElementById('game-feedback').className = 'game-feedback game-feedback--wrong';
+            this.value = '';
+            showNextWord();
+          }
+        }
+      });
+    })();
+
+    // ===== Leaderboard (via Cloudflare Worker) =====
+    // TODO: Replace with your deployed Cloudflare Worker URL
+    var WORKER_URL = 'https://dev-leaderboard.YOUR-SUBDOMAIN.workers.dev';
+    var LEADERBOARD_URL = '/Developers/leaderboard.json';
+
+    function refreshLeaderboard() {
+      var content = document.getElementById('leaderboard-content');
+      content.innerHTML = '<p class="leaderboard-empty">Loading leaderboard\u2026</p>';
+      fetch(LEADERBOARD_URL + '?t=' + Date.now())
+        .then(function (r) { return r.ok ? r.json() : Promise.reject('not found'); })
+        .then(function (data) { renderLeaderboard(data.scores || []); })
+        .catch(function () {
+          content.innerHTML = '<p class="leaderboard-empty">No leaderboard data yet. Be the first to submit a score!</p>';
+        });
+    }
+
+    function renderLeaderboard(scores) {
+      var content = document.getElementById('leaderboard-content');
+      if (!scores.length) {
+        content.innerHTML = '<p class="leaderboard-empty">No scores yet. Play and submit yours!</p>';
+        return;
+      }
+      var medals = ['\ud83e\udd47', '\ud83e\udd48', '\ud83e\udd49'];
+      var html = '<table class="leaderboard-table"><thead><tr>' +
+        '<th>#</th><th>Player</th><th>Score</th><th>Streak</th><th>Date</th>' +
+        '</tr></thead><tbody>';
+      scores.slice(0, 50).forEach(function (s, i) {
+        var rank = medals[i] || (i + 1);
+        var dateStr = s.date ? new Date(s.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+        html += '<tr class="' + (i < 3 ? 'leaderboard-row--top' : '') + '">' +
+          '<td>' + rank + '</td>' +
+          '<td>' + escapeHtml(s.name) + '</td>' +
+          '<td><strong>' + s.score + '</strong> words</td>' +
+          '<td>' + (s.streak || 0) + '</td>' +
+          '<td>' + dateStr + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+      content.innerHTML = html;
+    }
+
+    function submitScore() {
+      var btn = document.getElementById('game-submit-btn');
+      var status = document.getElementById('game-submit-status');
+      btn.disabled = true;
+      btn.textContent = 'Submitting\u2026';
+      status.textContent = '';
+
+      fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: gamePlayerName.slice(0, 30),
+          score: gameScore,
+          streak: gameBestStreak,
+          accuracy: gameTotalAttempts > 0 ? Math.round((gameScore / gameTotalAttempts) * 100) : 0,
+        }),
+      })
+      .then(function (r) {
+        if (r.ok) {
+          btn.textContent = '\u2705 Submitted!';
+          status.textContent = 'Score sent! The leaderboard updates in ~30 seconds.';
+          status.className = 'game-submit-status game-submit-status--ok';
+        } else {
+          return r.json().then(function (d) { throw new Error(d.error || 'Submission failed'); });
+        }
+      })
+      .catch(function (err) {
+        btn.disabled = false;
+        btn.textContent = '\ud83d\ude80 Submit to Leaderboard';
+        status.textContent = 'Error: ' + err.message;
+        status.className = 'game-submit-status game-submit-status--err';
+      });
+    }
   </script>
   <div id="screenshot-toast" class="screenshot-toast"></div>
   <div id="achievement-toast"></div>

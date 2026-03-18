@@ -1316,6 +1316,157 @@
   font-family: 'Comic Sans MS', cursive;
 }
 
+/* ===== Social Auth ===== */
+
+.social-auth-card {
+  background: rgb(23, 23, 23);
+  border-radius: 1.25rem;
+  outline: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  max-width: 400px;
+  margin: 2rem auto;
+}
+
+.social-auth-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.social-auth-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.3rem;
+}
+
+.social-auth-subtitle {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0 0 1.5rem;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.25rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 0.55rem 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.auth-tab--active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.auth-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.auth-input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.auth-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 0.7rem 0;
+  border-radius: 0.5rem;
+  border: none;
+  background: #fff;
+  color: #111;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.12s;
+}
+
+.auth-submit-btn:hover {
+  background: #e5e5e5;
+}
+
+.auth-submit-btn:active {
+  transform: scale(0.98);
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  font-size: 0.78rem;
+  color: #ef4444;
+  margin: 0.75rem 0 0;
+  min-height: 1.2em;
+}
+
+.auth-success {
+  font-size: 0.78rem;
+  color: #22c55e;
+  margin: 0.5rem 0 0;
+  min-height: 1.2em;
+}
+
+.social-profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  align-items: flex-end;
+}
+
+.social-signout-btn {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.3rem 0.7rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.social-signout-btn:hover {
+  background: rgba(220, 38, 38, 0.15);
+  color: #ef4444;
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
 /* ===== Social Media Panel ===== */
 
 .social-profile-card {
@@ -1962,6 +2113,66 @@
 
 /* ===== Light theme — social ===== */
 
+[data-theme="light"] .social-auth-card {
+  background: #fff;
+  outline-color: rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .social-auth-title {
+  color: #111;
+}
+
+[data-theme="light"] .social-auth-subtitle {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] .auth-tabs {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .auth-tab {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] .auth-tab--active {
+  background: rgba(0, 0, 0, 0.08);
+  color: #111;
+}
+
+[data-theme="light"] .auth-input {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.03);
+  color: #111;
+}
+
+[data-theme="light"] .auth-input:focus {
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .auth-input::placeholder {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="light"] .auth-submit-btn {
+  background: #111;
+  color: #fff;
+}
+
+[data-theme="light"] .auth-submit-btn:hover {
+  background: #333;
+}
+
+[data-theme="light"] .social-signout-btn {
+  border-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="light"] .social-signout-btn:hover {
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.2);
+}
+
 [data-theme="light"] .social-profile-card,
 [data-theme="light"] .post-composer,
 [data-theme="light"] .post-card {
@@ -2152,6 +2363,20 @@
 }
 
 /* ===== Goofy theme — social ===== */
+
+[data-theme="goofy"] .social-auth-card {
+  background: rgba(0, 0, 0, 0.25);
+  outline: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 1.5rem;
+}
+
+[data-theme="goofy"] .social-auth-title {
+  font-family: 'Comic Sans MS', cursive;
+}
+
+[data-theme="goofy"] .auth-submit-btn {
+  animation: btnBounce 1.4s ease-in-out infinite;
+}
 
 [data-theme="goofy"] .social-profile-card,
 [data-theme="goofy"] .post-composer,

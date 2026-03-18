@@ -109,48 +109,77 @@
   <!-- Social Media panel -->
   <div id="panel-social" style="display:none; width:100%; max-width:56rem;">
 
-    <!-- Profile Card -->
-    <div class="social-profile-card">
-      <div class="social-avatar-circle" id="profile-avatar-display">🧑‍💻</div>
-      <div class="social-profile-info">
-        <div class="social-profile-name-row">
-          <span id="profile-name-text" class="social-profile-name">Your Name</span>
-          <span id="profile-handle-text" class="social-profile-handle">@user</span>
-        </div>
-        <p id="profile-bio-text" class="social-profile-bio">No bio yet.</p>
-        <div class="social-profile-stats">
-          <span id="profile-posts-count" class="social-profile-stat"><strong>0</strong> Posts</span>
+    <!-- Auth Section (shown when logged out) -->
+    <div id="social-auth" class="social-auth-card">
+      <div class="social-auth-icon">💬</div>
+      <h2 class="social-auth-title">Join the Community</h2>
+      <p class="social-auth-subtitle">Sign in to post, like, and comment with other developers</p>
+      <div class="auth-tabs">
+        <button id="auth-tab-login" onclick="switchAuthTab('login')" class="auth-tab auth-tab--active">Sign In</button>
+        <button id="auth-tab-signup" onclick="switchAuthTab('signup')" class="auth-tab">Sign Up</button>
+      </div>
+      <div class="auth-fields">
+        <input type="email" id="auth-email" class="auth-input" placeholder="Email address" autocomplete="email" />
+        <input type="password" id="auth-password" class="auth-input" placeholder="Password (min 6 characters)" autocomplete="current-password" />
+        <div id="auth-signup-fields" style="display:none">
+          <input type="text" id="auth-display-name" class="auth-input" placeholder="Display name" maxlength="60" autocomplete="off" />
         </div>
       </div>
-      <button onclick="openProfileEditor()" class="social-edit-profile-btn">✏️ Edit Profile</button>
+      <button id="auth-submit-btn" onclick="handleAuth()" class="auth-submit-btn">Sign In</button>
+      <p id="auth-error" class="auth-error"></p>
+      <p id="auth-success" class="auth-success"></p>
     </div>
 
-    <!-- Post Composer -->
-    <div class="post-composer">
-      <div class="post-composer-top">
-        <div id="composer-avatar" class="composer-avatar-circle">🧑‍💻</div>
-        <textarea id="post-message" class="post-message-input" placeholder="Share something with the community..." rows="3" maxlength="300"></textarea>
-      </div>
-      <div id="selected-ss-preview" class="selected-ss-preview" style="display:none">
-        <img id="selected-ss-img" class="selected-ss-img" alt="Selected screenshot" />
-        <button onclick="clearSelectedScreenshot()" class="selected-ss-remove" title="Remove">✕</button>
-      </div>
-      <div class="post-composer-bottom">
-        <div class="attach-screenshots-row">
-          <span class="attach-label">📎 Attach:</span>
-          <div id="attach-ss-strip" class="attach-ss-strip"></div>
-          <span id="attach-ss-empty" class="attach-ss-empty" style="display:none">No screenshots saved yet</span>
-        </div>
-        <div class="post-footer-right">
-          <span id="post-char-count" class="post-char-count">0 / 300</span>
-          <button onclick="submitPost()" class="post-submit-btn">Post</button>
-        </div>
-      </div>
-    </div>
+    <!-- Authenticated section (shown when logged in) -->
+    <div id="social-main" style="display:none">
 
-    <!-- Feed -->
-    <div id="social-feed" class="social-feed">
-      <div class="social-feed-empty">No posts yet.<br>Share your first screenshot with the community!</div>
+      <!-- Profile Card -->
+      <div class="social-profile-card">
+        <div class="social-avatar-circle" id="profile-avatar-display">🧑‍💻</div>
+        <div class="social-profile-info">
+          <div class="social-profile-name-row">
+            <span id="profile-name-text" class="social-profile-name">Your Name</span>
+            <span id="profile-handle-text" class="social-profile-handle">@user</span>
+          </div>
+          <p id="profile-bio-text" class="social-profile-bio">No bio yet.</p>
+          <div class="social-profile-stats">
+            <span id="profile-posts-count" class="social-profile-stat"><strong>0</strong> Posts</span>
+          </div>
+        </div>
+        <div class="social-profile-actions">
+          <button onclick="openProfileEditor()" class="social-edit-profile-btn">✏️ Edit Profile</button>
+          <button onclick="socialSignOut()" class="social-signout-btn">Sign Out</button>
+        </div>
+      </div>
+
+      <!-- Post Composer -->
+      <div class="post-composer">
+        <div class="post-composer-top">
+          <div id="composer-avatar" class="composer-avatar-circle">🧑‍💻</div>
+          <textarea id="post-message" class="post-message-input" placeholder="Share something with the community..." rows="3" maxlength="300"></textarea>
+        </div>
+        <div id="selected-ss-preview" class="selected-ss-preview" style="display:none">
+          <img id="selected-ss-img" class="selected-ss-img" alt="Selected screenshot" />
+          <button onclick="clearSelectedScreenshot()" class="selected-ss-remove" title="Remove">✕</button>
+        </div>
+        <div class="post-composer-bottom">
+          <div class="attach-screenshots-row">
+            <span class="attach-label">📎 Attach:</span>
+            <div id="attach-ss-strip" class="attach-ss-strip"></div>
+            <span id="attach-ss-empty" class="attach-ss-empty" style="display:none">No screenshots saved yet</span>
+          </div>
+          <div class="post-footer-right">
+            <span id="post-char-count" class="post-char-count">0 / 300</span>
+            <button onclick="submitPost()" class="post-submit-btn">Post</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feed -->
+      <div id="social-feed" class="social-feed">
+        <div class="social-feed-empty">No posts yet.<br>Share your first screenshot with the community!</div>
+      </div>
+
     </div>
 
   </div>
@@ -319,6 +348,11 @@
   </div>
 
   <script>
+    // ===== Supabase Client =====
+    var SUPABASE_URL = 'https://ytqlwvyskaixglevarkk.supabase.co';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0cWx3dnlza2FpeGdsZXZhcmtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MzEzMDgsImV4cCI6MjA4OTQwNzMwOH0.T-Wdf9qfGG69Gmi_-qsCgP0dLiGp5tIaH9HtMg39mXk';
+    var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const videos = {
       developers: '/Developers/developers.mp4',
       videoplayback: '/Developers/videoplayback.mp4',
@@ -486,9 +520,11 @@
         renderStats();
       }
       if (key === 'social') {
-        renderSocialProfile();
-        renderFeed();
-        renderAttachStrip();
+        if (currentUser) {
+          renderSocialProfile();
+          loadFeed();
+          renderAttachStrip();
+        }
       }
       if (key === 'game') {
         refreshLeaderboard();
@@ -1121,34 +1157,101 @@
       };
     })();
 
-    // ===== Social Media =====
-    var POSTS_KEY   = 'dev_posts';
-    var PROFILE_KEY = 'dev_profile';
+    // ===== Social Media (Supabase) =====
+    var currentUser = null;
+    var currentProfile = null;
     var SOCIAL_AVATARS = ['🧑‍💻','👨‍💻','👩‍💻','🦊','🐱','🐶','🐼','🦄','🐸','🦁','🐯','🤖','👾','🎮','🎬','🎨','🌟','⚡','🔥','🌊','🐧','🎵'];
     var selectedPostScreenshotId = null;
     var editingAvatarEmoji = null;
+    var socialAuthMode = 'login';
 
-    function getProfile() {
-      try {
-        return JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null') ||
-          { name: 'Your Name', handle: '@user', bio: '', avatar: '🧑‍💻' };
-      } catch (e) {
-        return { name: 'Your Name', handle: '@user', bio: '', avatar: '🧑‍💻' };
+    function switchAuthTab(mode) {
+      socialAuthMode = mode;
+      document.getElementById('auth-tab-login').classList.toggle('auth-tab--active', mode === 'login');
+      document.getElementById('auth-tab-signup').classList.toggle('auth-tab--active', mode === 'signup');
+      document.getElementById('auth-signup-fields').style.display = mode === 'signup' ? '' : 'none';
+      document.getElementById('auth-submit-btn').textContent = mode === 'login' ? 'Sign In' : 'Sign Up';
+      document.getElementById('auth-error').textContent = '';
+      document.getElementById('auth-success').textContent = '';
+    }
+
+    function handleAuth() {
+      var email = (document.getElementById('auth-email').value || '').trim();
+      var password = document.getElementById('auth-password').value || '';
+      var errorEl = document.getElementById('auth-error');
+      var successEl = document.getElementById('auth-success');
+      var btn = document.getElementById('auth-submit-btn');
+      errorEl.textContent = '';
+      successEl.textContent = '';
+      if (!email || !password) { errorEl.textContent = 'Please enter email and password'; return; }
+      if (password.length < 6) { errorEl.textContent = 'Password must be at least 6 characters'; return; }
+      btn.disabled = true;
+      btn.textContent = socialAuthMode === 'login' ? 'Signing in\u2026' : 'Signing up\u2026';
+
+      if (socialAuthMode === 'login') {
+        supabase.auth.signInWithPassword({ email: email, password: password })
+          .then(function (result) {
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+            if (result.error) { errorEl.textContent = result.error.message; return; }
+            onAuthChange(result.data.user);
+          });
+      } else {
+        var displayName = (document.getElementById('auth-display-name').value || '').trim() || 'Anonymous';
+        supabase.auth.signUp({
+          email: email,
+          password: password,
+          options: { data: { display_name: displayName } }
+        })
+          .then(function (result) {
+            btn.disabled = false;
+            btn.textContent = 'Sign Up';
+            if (result.error) { errorEl.textContent = result.error.message; return; }
+            if (result.data.user && !result.data.session) {
+              successEl.textContent = 'Check your email to confirm your account!';
+              return;
+            }
+            if (result.data.user) {
+              onAuthChange(result.data.user);
+            }
+          });
       }
     }
 
-    function saveProfileData(profile) {
-      localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    function socialSignOut() {
+      supabase.auth.signOut().then(function () {
+        currentUser = null;
+        currentProfile = null;
+        document.getElementById('social-auth').style.display = '';
+        document.getElementById('social-main').style.display = 'none';
+      });
     }
 
-    function getPosts() {
-      try { return JSON.parse(localStorage.getItem(POSTS_KEY) || '[]'); }
-      catch (e) { return []; }
-    }
-
-    function savePosts(posts) {
-      try { localStorage.setItem(POSTS_KEY, JSON.stringify(posts)); return true; }
-      catch (e) { return false; }
+    function onAuthChange(user) {
+      currentUser = user;
+      if (!user) {
+        document.getElementById('social-auth').style.display = '';
+        document.getElementById('social-main').style.display = 'none';
+        return;
+      }
+      document.getElementById('social-auth').style.display = 'none';
+      document.getElementById('social-main').style.display = '';
+      supabase.from('profiles').select('*').eq('id', user.id).single()
+        .then(function (result) {
+          if (result.error && result.error.code === 'PGRST116') {
+            var handle = '@' + (user.email || 'user').split('@')[0];
+            return supabase.from('profiles').insert({
+              id: user.id, name: 'Anonymous', handle: handle, bio: '', avatar: '\ud83e\uddd1\u200d\ud83d\udcbb'
+            }).select().single();
+          }
+          return result;
+        })
+        .then(function (result) {
+          currentProfile = result.data || { name: 'Anonymous', handle: '@user', bio: '', avatar: '\ud83e\uddd1\u200d\ud83d\udcbb' };
+          renderSocialProfile();
+          loadFeed();
+          renderAttachStrip();
+        });
     }
 
     function timeAgo(isoStr) {
@@ -1173,14 +1276,21 @@
     }
 
     function renderSocialProfile() {
-      var profile = getProfile();
+      if (!currentProfile) return;
       var el;
-      if ((el = document.getElementById('profile-avatar-display'))) el.textContent = profile.avatar;
-      if ((el = document.getElementById('profile-name-text')))    el.textContent = profile.name;
-      if ((el = document.getElementById('profile-handle-text')))  el.textContent = profile.handle;
-      if ((el = document.getElementById('profile-bio-text')))     el.textContent = profile.bio || 'No bio yet.';
-      if ((el = document.getElementById('profile-posts-count')))  el.innerHTML = '<strong>' + getPosts().length + '</strong> Posts';
-      if ((el = document.getElementById('composer-avatar')))      el.textContent = profile.avatar;
+      if ((el = document.getElementById('profile-avatar-display'))) el.textContent = currentProfile.avatar;
+      if ((el = document.getElementById('profile-name-text')))    el.textContent = currentProfile.name;
+      if ((el = document.getElementById('profile-handle-text')))  el.textContent = currentProfile.handle;
+      if ((el = document.getElementById('profile-bio-text')))     el.textContent = currentProfile.bio || 'No bio yet.';
+      if ((el = document.getElementById('composer-avatar')))      el.textContent = currentProfile.avatar;
+      if (currentUser) {
+        supabase.from('posts').select('id', { count: 'exact', head: true }).eq('user_id', currentUser.id)
+          .then(function (r) {
+            if ((el = document.getElementById('profile-posts-count'))) {
+              el.innerHTML = '<strong>' + (r.count || 0) + '</strong> Posts';
+            }
+          });
+      }
     }
 
     function renderAttachStrip() {
@@ -1225,57 +1335,166 @@
       renderAttachStrip();
     }
 
+    function loadFeed() {
+      var feed = document.getElementById('social-feed');
+      if (!feed) return;
+      feed.innerHTML = '<div class="social-feed-empty">Loading posts\u2026</div>';
+      supabase.from('posts')
+        .select('id, message, image_url, created_at, user_id, profiles!posts_user_id_fkey(name, handle, avatar), likes(user_id)')
+        .order('created_at', { ascending: false })
+        .limit(50)
+        .then(function (result) {
+          if (result.error) {
+            console.error('Feed error:', result.error);
+            feed.innerHTML = '<div class="social-feed-empty">Could not load feed.</div>';
+            return;
+          }
+          var posts = result.data || [];
+          if (posts.length === 0) { renderFeed([]); return; }
+          var postIds = posts.map(function (p) { return p.id; });
+          supabase.from('comments')
+            .select('id, post_id, text, created_at, user_id, profiles(name, avatar)')
+            .in('post_id', postIds)
+            .order('created_at', { ascending: true })
+            .then(function (cResult) {
+              var comments = (cResult.data || []);
+              posts.forEach(function (p) {
+                p.comments = comments.filter(function (c) { return c.post_id === p.id; });
+              });
+              renderFeed(posts);
+            });
+        });
+    }
+
+    function renderFeed(posts) {
+      var feed = document.getElementById('social-feed');
+      if (!feed) return;
+      if (!posts || posts.length === 0) {
+        feed.innerHTML = '<div class="social-feed-empty">No posts yet.<br>Share your first screenshot with the community!</div>';
+        return;
+      }
+      var uid = currentUser ? currentUser.id : null;
+      feed.innerHTML = posts.map(function (post) {
+        var author = post.profiles || { name: 'Unknown', handle: '@unknown', avatar: '\ud83e\uddd1\u200d\ud83d\udcbb' };
+        var likeCount = post.likes ? post.likes.length : 0;
+        var liked = post.likes && uid ? post.likes.some(function (l) { return l.user_id === uid; }) : false;
+        var comments = post.comments || [];
+        comments.sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
+        var isOwn = uid === post.user_id;
+        return '<div class="post-card" id="post-' + post.id + '">' +
+          '<div class="post-card-header">' +
+            '<div class="post-card-avatar">' + escapeHtml(author.avatar || '\ud83e\uddd1\u200d\ud83d\udcbb') + '</div>' +
+            '<div class="post-card-author-info">' +
+              '<div class="post-card-name">' + escapeHtml(author.name) + '</div>' +
+              '<div class="post-card-meta">' + escapeHtml(author.handle) + ' \xb7 ' + timeAgo(post.created_at) + '</div>' +
+            '</div>' +
+          '</div>' +
+          (post.image_url ? '<img src="' + escapeHtml(post.image_url) + '" class="post-card-image" loading="lazy" alt="Post screenshot" />' : '') +
+          (post.message ? '<div class="post-card-message">' + escapeHtml(post.message) + '</div>' : '') +
+          '<div class="post-card-actions">' +
+            '<button id="like-btn-' + post.id + '" onclick="toggleLike(' + post.id + ')" class="post-action-btn' + (liked ? ' post-action-btn--liked' : '') + '">' +
+              (liked ? '\u2764\ufe0f' : '\ud83e\udd0d') + ' ' + likeCount +
+            '</button>' +
+            '<button id="comment-btn-' + post.id + '" onclick="toggleComments(' + post.id + ')" class="post-action-btn">\ud83d\udcac ' + comments.length + '</button>' +
+            '<div class="post-action-spacer"></div>' +
+            (isOwn ? '<button onclick="deletePost(' + post.id + ')" class="post-action-btn post-action-btn--delete" title="Delete post">\ud83d\uddd1</button>' : '') +
+          '</div>' +
+          '<div id="comments-section-' + post.id + '" class="post-comments-section" style="display:none">' +
+            '<div id="comments-list-' + post.id + '">' + renderCommentsList(comments) + '</div>' +
+            '<div class="post-comment-input-row">' +
+              '<div class="post-comment-avatar">' + escapeHtml(currentProfile ? currentProfile.avatar : '\ud83e\uddd1\u200d\ud83d\udcbb') + '</div>' +
+              '<input type="text" class="post-comment-input" placeholder="Add a comment\u2026" maxlength="300" ' +
+                'onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitComment(' + post.id + ')}" />' +
+              '<button onclick="submitComment(' + post.id + ')" class="post-comment-submit">Reply</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function renderCommentsList(comments) {
+      if (!comments || comments.length === 0) return '';
+      return comments.map(function (c) {
+        var author = c.profiles || { name: 'Unknown', avatar: '\ud83e\uddd1\u200d\ud83d\udcbb' };
+        return '<div class="post-comment">' +
+          '<div class="post-comment-avatar">' + escapeHtml(author.avatar || '\ud83e\uddd1\u200d\ud83d\udcbb') + '</div>' +
+          '<div class="post-comment-body">' +
+            '<div class="post-comment-author">' + escapeHtml(author.name) +
+              ' <span style="font-weight:400;color:rgba(255,255,255,0.3);font-size:0.65rem">' + timeAgo(c.created_at) + '</span></div>' +
+            '<div class="post-comment-text">' + escapeHtml(c.text) + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
     function submitPost() {
-      var msgEl   = document.getElementById('post-message');
+      var msgEl = document.getElementById('post-message');
       var message = (msgEl ? msgEl.value || '' : '').trim();
       if (!message && !selectedPostScreenshotId) {
-        showToast('⚠️ Write something or attach a screenshot');
+        showToast('\u26a0\ufe0f Write something or attach a screenshot');
         return;
       }
-      var profile = getProfile();
-      var screenshotDataUrl = null;
+      if (!currentUser) { showToast('\u26a0\ufe0f You must be signed in'); return; }
+      var btn = document.querySelector('.post-submit-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Posting\u2026'; }
+
+      var uploadPromise;
       if (selectedPostScreenshotId) {
         var ss = getScreenshots().find(function (s) { return s.id === selectedPostScreenshotId; });
-        if (ss) screenshotDataUrl = ss.dataUrl;
+        if (ss && ss.dataUrl) {
+          uploadPromise = fetch(ss.dataUrl)
+            .then(function (r) { return r.blob(); })
+            .then(function (blob) {
+              var filename = currentUser.id + '/' + Date.now() + '.jpg';
+              return supabase.storage.from('post-images').upload(filename, blob, { contentType: 'image/jpeg' });
+            })
+            .then(function (result) {
+              if (result.error) throw result.error;
+              return supabase.storage.from('post-images').getPublicUrl(result.data.path).data.publicUrl;
+            });
+        } else {
+          uploadPromise = Promise.resolve(null);
+        }
+      } else {
+        uploadPromise = Promise.resolve(null);
       }
-      var post = {
-        id: Date.now().toString(),
-        message: message,
-        screenshotDataUrl: screenshotDataUrl,
-        authorName: profile.name,
-        authorHandle: profile.handle,
-        authorAvatar: profile.avatar,
-        postedAt: new Date().toISOString(),
-        likes: 0,
-        likedByMe: false,
-        comments: [],
-      };
-      var posts = getPosts();
-      posts.unshift(post);
-      if (!savePosts(posts)) {
-        showToast('⚠️ Could not save post – storage full');
-        return;
-      }
-      if (msgEl) msgEl.value = '';
-      var charEl = document.getElementById('post-char-count');
-      if (charEl) { charEl.textContent = '0 / 300'; charEl.className = 'post-char-count'; }
-      clearSelectedScreenshot();
-      renderSocialProfile();
-      renderFeed();
-      showToast('🎉 Posted!');
+
+      uploadPromise
+        .then(function (imageUrl) {
+          return supabase.from('posts').insert({
+            user_id: currentUser.id,
+            message: message,
+            image_url: imageUrl,
+          });
+        })
+        .then(function (result) {
+          if (result.error) throw result.error;
+          if (msgEl) msgEl.value = '';
+          var charEl = document.getElementById('post-char-count');
+          if (charEl) { charEl.textContent = '0 / 300'; charEl.className = 'post-char-count'; }
+          clearSelectedScreenshot();
+          renderSocialProfile();
+          loadFeed();
+          showToast('\ud83c\udf89 Posted!');
+        })
+        .catch(function (err) {
+          showToast('\u26a0\ufe0f ' + (err.message || 'Could not post'));
+        })
+        .finally(function () {
+          if (btn) { btn.disabled = false; btn.textContent = 'Post'; }
+        });
     }
 
     function toggleLike(postId) {
-      var posts = getPosts();
-      var p = posts.find(function (x) { return x.id === postId; });
-      if (!p) return;
-      p.likedByMe = !p.likedByMe;
-      p.likes = Math.max(0, (p.likes || 0) + (p.likedByMe ? 1 : -1));
-      savePosts(posts);
+      if (!currentUser) return;
       var btn = document.getElementById('like-btn-' + postId);
-      if (btn) {
-        btn.className = 'post-action-btn' + (p.likedByMe ? ' post-action-btn--liked' : '');
-        btn.innerHTML = (p.likedByMe ? '❤️' : '🤍') + ' ' + p.likes;
+      var isLiked = btn && btn.classList.contains('post-action-btn--liked');
+      if (isLiked) {
+        supabase.from('likes').delete().eq('post_id', postId).eq('user_id', currentUser.id)
+          .then(function () { loadFeed(); });
+      } else {
+        supabase.from('likes').insert({ post_id: postId, user_id: currentUser.id })
+          .then(function () { loadFeed(); });
       }
     }
 
@@ -1291,102 +1510,37 @@
     }
 
     function submitComment(postId) {
+      if (!currentUser) return;
       var section = document.getElementById('comments-section-' + postId);
       if (!section) return;
       var input = section.querySelector('.post-comment-input');
       if (!input) return;
       var text = (input.value || '').trim();
       if (!text) return;
-      var posts = getPosts();
-      var p = posts.find(function (x) { return x.id === postId; });
-      if (!p) return;
-      var profile = getProfile();
-      p.comments = p.comments || [];
-      p.comments.push({
-        id: Date.now().toString(),
-        authorName: profile.name,
-        authorAvatar: profile.avatar,
-        text: text,
-        postedAt: new Date().toISOString(),
-      });
-      savePosts(posts);
       input.value = '';
-      var btn = document.getElementById('comment-btn-' + postId);
-      if (btn) btn.innerHTML = '💬 ' + p.comments.length;
-      var list = document.getElementById('comments-list-' + postId);
-      if (list) list.innerHTML = renderCommentsList(p.comments);
-    }
-
-    function renderCommentsList(comments) {
-      if (!comments || comments.length === 0) return '';
-      return comments.map(function (c) {
-        return '<div class="post-comment">' +
-          '<div class="post-comment-avatar">' + escapeHtml(c.authorAvatar || '🧑‍💻') + '</div>' +
-          '<div class="post-comment-body">' +
-            '<div class="post-comment-author">' + escapeHtml(c.authorName) +
-              ' <span style="font-weight:400;color:rgba(255,255,255,0.3);font-size:0.65rem">' + timeAgo(c.postedAt) + '</span></div>' +
-            '<div class="post-comment-text">' + escapeHtml(c.text) + '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
+      supabase.from('comments').insert({ post_id: postId, user_id: currentUser.id, text: text })
+        .then(function (result) {
+          if (result.error) { showToast('\u26a0\ufe0f Could not comment'); return; }
+          loadFeed();
+        });
     }
 
     function deletePost(postId) {
-      var posts = getPosts().filter(function (x) { return x.id !== postId; });
-      savePosts(posts);
-      renderFeed();
-      renderSocialProfile();
-    }
-
-    function renderFeed() {
-      var feed = document.getElementById('social-feed');
-      if (!feed) return;
-      var posts = getPosts();
-      if (posts.length === 0) {
-        feed.innerHTML = '<div class="social-feed-empty">No posts yet.<br>Share your first screenshot with the community!</div>';
-        return;
-      }
-      var profile = getProfile();
-      feed.innerHTML = posts.map(function (post) {
-        var commentCount = post.comments ? post.comments.length : 0;
-        return '<div class="post-card" id="post-' + post.id + '">' +
-          '<div class="post-card-header">' +
-            '<div class="post-card-avatar">' + escapeHtml(post.authorAvatar || '🧑‍💻') + '</div>' +
-            '<div class="post-card-author-info">' +
-              '<div class="post-card-name">' + escapeHtml(post.authorName) + '</div>' +
-              '<div class="post-card-meta">' + escapeHtml(post.authorHandle) + ' \xb7 ' + timeAgo(post.postedAt) + '</div>' +
-            '</div>' +
-          '</div>' +
-          (post.screenshotDataUrl ? '<img src="' + post.screenshotDataUrl + '" class="post-card-image" loading="lazy" alt="Post screenshot" />' : '') +
-          (post.message ? '<div class="post-card-message">' + escapeHtml(post.message) + '</div>' : '') +
-          '<div class="post-card-actions">' +
-            '<button id="like-btn-' + post.id + '" onclick="toggleLike(\'' + post.id + '\')" class="post-action-btn' + (post.likedByMe ? ' post-action-btn--liked' : '') + '">' +
-              (post.likedByMe ? '\u2764\ufe0f' : '\ud83e\udd0d') + ' ' + (post.likes || 0) +
-            '</button>' +
-            '<button id="comment-btn-' + post.id + '" onclick="toggleComments(\'' + post.id + '\')" class="post-action-btn">\ud83d\udcac ' + commentCount + '</button>' +
-            '<div class="post-action-spacer"></div>' +
-            '<button onclick="deletePost(\'' + post.id + '\')" class="post-action-btn post-action-btn--delete" title="Delete post">\ud83d\uddd1</button>' +
-          '</div>' +
-          '<div id="comments-section-' + post.id + '" class="post-comments-section" style="display:none">' +
-            '<div id="comments-list-' + post.id + '">' + renderCommentsList(post.comments) + '</div>' +
-            '<div class="post-comment-input-row">' +
-              '<div class="post-comment-avatar">' + escapeHtml(profile.avatar) + '</div>' +
-              '<input type="text" class="post-comment-input" placeholder="Add a comment\u2026" maxlength="300" ' +
-                'onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitComment(\'' + post.id + '\')}" />' +
-              '<button onclick="submitComment(\'' + post.id + '\')" class="post-comment-submit">Reply</button>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
+      if (!currentUser) return;
+      supabase.from('posts').delete().eq('id', postId).eq('user_id', currentUser.id)
+        .then(function () {
+          loadFeed();
+          renderSocialProfile();
+        });
     }
 
     // ===== Profile Editor =====
     function openProfileEditor() {
-      var profile = getProfile();
-      document.getElementById('edit-name').value   = profile.name;
-      document.getElementById('edit-handle').value = profile.handle;
-      document.getElementById('edit-bio').value    = profile.bio || '';
-      editingAvatarEmoji = profile.avatar;
+      if (!currentProfile) return;
+      document.getElementById('edit-name').value = currentProfile.name;
+      document.getElementById('edit-handle').value = currentProfile.handle;
+      document.getElementById('edit-bio').value = currentProfile.bio || '';
+      editingAvatarEmoji = currentProfile.avatar;
       renderAvatarPicker();
       document.getElementById('profile-modal').style.display = 'flex';
     }
@@ -1410,19 +1564,25 @@
     }
 
     function saveProfileChanges() {
-      var name   = (document.getElementById('edit-name').value   || '').trim() || 'Anonymous';
+      if (!currentUser) return;
+      var name = (document.getElementById('edit-name').value || '').trim() || 'Anonymous';
       var handle = (document.getElementById('edit-handle').value || '').trim();
       if (handle && !handle.startsWith('@')) handle = '@' + handle;
       if (!handle) handle = '@user';
       var bio = (document.getElementById('edit-bio').value || '').trim();
-      saveProfileData({ name: name, handle: handle, bio: bio, avatar: editingAvatarEmoji || '🧑‍💻' });
-      closeProfileEditor();
-      renderSocialProfile();
-      renderFeed();
-      showToast('✅ Profile updated!');
+      var updated = { name: name, handle: handle, bio: bio, avatar: editingAvatarEmoji || '\ud83e\uddd1\u200d\ud83d\udcbb' };
+      supabase.from('profiles').update(updated).eq('id', currentUser.id)
+        .then(function (result) {
+          if (result.error) { showToast('\u26a0\ufe0f Could not save profile'); return; }
+          currentProfile = Object.assign(currentProfile || {}, updated);
+          closeProfileEditor();
+          renderSocialProfile();
+          loadFeed();
+          showToast('\u2705 Profile updated!');
+        });
     }
 
-    // Init social
+    // Init social auth
     (function () {
       var msgInput = document.getElementById('post-message');
       if (msgInput) {
@@ -1435,7 +1595,23 @@
           }
         });
       }
-      renderSocialProfile();
+      // Check for existing session
+      supabase.auth.getSession().then(function (result) {
+        if (result.data.session && result.data.session.user) {
+          onAuthChange(result.data.session.user);
+        }
+      });
+      // Listen for auth state changes
+      supabase.auth.onAuthStateChange(function (event, session) {
+        if (session && session.user) {
+          onAuthChange(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          currentUser = null;
+          currentProfile = null;
+          document.getElementById('social-auth').style.display = '';
+          document.getElementById('social-main').style.display = 'none';
+        }
+      });
     })();
 
     // ===== Dev Typing Game =====
@@ -1574,11 +1750,6 @@
     })();
 
     // ===== Leaderboard (Supabase) =====
-    // TODO: Replace with your Supabase project URL and anon key
-    var SUPABASE_URL = 'https://ytqlwvyskaixglevarkk.supabase.co';
-    var SUPABASE_ANON_KEY = 'sb_publishable_uKKnnIZ7kz7AeCe9pticTQ_k4Otqgb4';
-    var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     function refreshLeaderboard() {
       var content = document.getElementById('leaderboard-content');
       content.innerHTML = '<p class="leaderboard-empty">Loading leaderboard\u2026</p>';
